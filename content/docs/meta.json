@@ -1,0 +1,13 @@
+{
+  "title": "Mailer",
+  "pages": [
+    "index",
+    "getting-started",
+    "examples",
+    "sdk",
+    "workflows",
+    "internals",
+    "operations",
+    "reference"
+  ]
+}

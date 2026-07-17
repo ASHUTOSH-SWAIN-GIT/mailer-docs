@@ -1,0 +1,35 @@
+---
+title: Delivery Guarantees
+description: At-most-once, at-least-once, and exactly-once behavior.
+icon: Shield
+---
+
+Delivery guarantees depend on checkpointing and sink capabilities.
+
+| Configuration | State guarantee | Output guarantee |
+| --- | --- | --- |
+| No checkpointing | None across restart | At-most-once across restart |
+| Checkpointing with plain sink | Exactly-once state | At-least-once output |
+| Kafka exactly-once source + `TxnKafkaSink` + checkpointing | Exactly-once state | End-to-end exactly-once |
+
+## Plain sinks
+
+With a plain sink, recovery may replay records already written before the crash.
+Operator state restores correctly, but external output can be duplicated.
+
+Use idempotent output writes, Postgres upserts, or transactional Kafka when
+duplicates matter.
+
+## Transactional Kafka
+
+Transactional Kafka coordinates source offsets, operator state, and sink output
+through checkpoint transactions.
+
+Consumers must use:
+
+```properties
+isolation.level=read_committed
+```
+
+Without `read_committed`, consumers can observe aborted transaction output and
+break the exactly-once guarantee.

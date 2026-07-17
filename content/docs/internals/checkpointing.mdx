@@ -1,0 +1,54 @@
+---
+title: Checkpointing
+description: Barrier snapshots, recovery, and checkpoint storage.
+icon: Save
+---
+
+Checkpointing creates a consistent snapshot of source offsets and operator
+state.
+
+```text
+record -> record -> barrier(cp-42) -> record
+```
+
+The barrier flows in-band through the pipeline. Stateful operators snapshot
+when the barrier passes through them.
+
+## What is stored
+
+A checkpoint stores:
+
+- Checkpoint id.
+- Source offsets per partition.
+- Stateful operator snapshots.
+- Native state references for Pebble-backed operators.
+- Transaction coordination metadata for exactly-once sinks.
+
+## Why barriers
+
+The barrier marks a consistent cut of the stream. Operators snapshot
+synchronously while processing the barrier, between records, so no concurrent
+record mutation races with the snapshot.
+
+## Parallel stages
+
+Parallel stages broadcast barriers to all workers. The stage output waits until
+all workers have delivered the barrier, then emits it once. This is barrier
+alignment.
+
+Without alignment, a fast worker could emit post-barrier records before a slow
+worker has snapshotted pre-barrier records.
+
+## Recovery
+
+When `Execute` starts with checkpoint storage configured:
+
+1. Load the latest completed checkpoint.
+2. Restore source offsets.
+3. Build the execution plan.
+4. Restore stateful operator clones.
+5. Start stages.
+
+For plain sinks, replay can re-emit records that were written before failure.
+For transactional Kafka, the coordinator resolves the transaction state before
+processing resumes.

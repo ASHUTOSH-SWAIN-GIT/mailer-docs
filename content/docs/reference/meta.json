@@ -1,0 +1,10 @@
+{
+  "title": "Reference",
+  "icon": "ListChecks",
+  "pages": [
+    "workflow-schema",
+    "cli",
+    "package-map",
+    "roadmap"
+  ]
+}

@@ -1,0 +1,24 @@
+---
+title: Package Map
+description: Where the implementation lives in the Mailer repository.
+icon: FolderTree
+---
+
+| Path | Purpose |
+| --- | --- |
+| `mailer.go` | Environment, execute path, checkpoint glue. |
+| `stream.go` | Fluent SDK methods. |
+| `types/record.go` | Data, watermark, and barrier records. |
+| `pipeline/` | Stage planner, edges, keyed stage, marker alignment. |
+| `operator/` | SDK operators. |
+| `window/` | Tumbling, sliding, and session assigners. |
+| `watermark/` | Bounded out-of-orderness strategy. |
+| `state/` | Memory and Pebble backends. |
+| `checkpoint/` | Checkpoint data, file storage, coordinator. |
+| `source/` | Kafka, generator, slice sources. |
+| `sink/` | Kafka, transactional Kafka, Postgres, stdout, blackhole. |
+| `workflow/` | Declarative parser, validator, compiler, runner, secrets. |
+| `observability/` | Metrics and dashboard. |
+| `examples/` | SDK and workflow examples. |
+| `test/workflow/` | Declarative integration tests. |
+| `test/unit_tests/` | Runtime, checkpoint, connector, state, and operator tests. |

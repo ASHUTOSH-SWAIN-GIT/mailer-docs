@@ -1,0 +1,63 @@
+---
+title: Postgres Operations
+description: Insert and upsert behavior for Postgres sinks.
+icon: Table2
+---
+
+Postgres sinks batch records and write rows with retry and failure policies.
+
+## Declarative sink
+
+```yaml
+sink:
+  type: postgres
+  postgres:
+    dsn: ${POSTGRES_DSN}
+    table: customer_totals
+    mapping:
+      customer.id: customer_id
+      sum: total_amount
+    mode: upsert
+    conflictColumns: [customer_id]
+    updateColumns: [total_amount]
+```
+
+Declarative Postgres uses one fixed table and a JSON field path to SQL column
+mapping.
+
+## Insert mode
+
+```yaml
+mode: insert
+```
+
+Insert mode writes rows with plain `INSERT`. Conflict and update columns are
+not allowed.
+
+## Upsert mode
+
+```yaml
+mode: upsert
+conflictColumns: [customer_id]
+updateColumns: [total_amount]
+```
+
+Upsert mode compiles to:
+
+```sql
+INSERT ... ON CONFLICT (...) DO UPDATE
+```
+
+If `updateColumns` is omitted, all non-conflict mapped columns are updated.
+
+## Mapping behavior
+
+- Missing fields become SQL `NULL`.
+- JSON numbers preserve exactness where possible.
+- Nested objects and arrays are stored as JSON.
+- Table and column names must be safe SQL identifiers.
+
+## SDK mapper
+
+The SDK Postgres sink accepts a mapper function for full control over table,
+columns, and values.

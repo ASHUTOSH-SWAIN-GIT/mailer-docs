@@ -1,0 +1,104 @@
+---
+title: Sinks
+description: How records leave Mailer pipelines.
+icon: Send
+---
+
+Sinks receive final records from the pipeline.
+
+## Stdout sink
+
+Use stdout for local examples.
+
+```go
+env.FromSource(src).
+    KeyBy(key).
+    Reduce(count).
+    ToSink(sink.NewStdoutSink())
+```
+
+## Blackhole sink
+
+Use blackhole for benchmarks or tests where output is irrelevant.
+
+```go
+sink.NewBlackholeSink()
+```
+
+## Kafka sink
+
+Plain Kafka sink provides at-least-once output when checkpointing is enabled.
+
+```go
+out := sink.NewKafkaSink(
+    sink.KafkaSinkBrokers("localhost:9092"),
+    sink.KafkaSinkTopic("order-summary"),
+    sink.KafkaSinkBatchSize(100),
+    sink.KafkaSinkBatchTimeout(time.Second),
+    sink.KafkaSinkRequiredAcks(sink.AcksLeader),
+)
+```
+
+Options:
+
+| Option | Purpose |
+| --- | --- |
+| `KafkaSinkBrokers(...string)` | Required bootstrap brokers. |
+| `KafkaSinkTopic(topic)` | Required destination topic. |
+| `KafkaSinkBatchSize(n)` | Max messages per batch. |
+| `KafkaSinkBatchTimeout(d)` | Max wait before flushing partial batch. |
+| `KafkaSinkRequiredAcks(level)` | `AcksNone`, `AcksLeader`, or `AcksAll`. |
+| `KafkaSinkAsync()` | Return without waiting for acknowledgement. |
+| `KafkaSinkSerialize(serializer)` | Transform record data before writing. |
+| `KafkaSinkMaxRetries(n)` | Retry failed writes. |
+| `KafkaSinkFailurePolicy(p)` | Drop, DLQ, or fail after retries. |
+| `KafkaSinkDLQ(dlq)` | Dead-letter queue for failed writes. |
+
+## Transactional Kafka sink
+
+Use `TxnKafkaSink` for end-to-end exactly-once Kafka-to-Kafka pipelines. It
+participates in the checkpoint coordinator and commits output only when the
+checkpoint completes.
+
+```go
+out := sink.NewTxnKafkaSink(
+    sink.TxnKafkaBrokers("localhost:9092"),
+    sink.TxnKafkaTopic("order-totals"),
+    sink.TxnKafkaTransactionalID("order-totals-pipeline"),
+)
+```
+
+Consumers of the output topic must use `isolation.level=read_committed`.
+
+## Postgres sink
+
+The SDK Postgres sink uses a mapper function.
+
+```go
+pg := sink.NewPostgresSink(
+    sink.PostgresDSN("postgres://user:pass@localhost:5432/app?sslmode=disable"),
+    sink.PostgresMapper(func(r types.Record) (string, []string, []any) {
+        return "customer_totals",
+            []string{"customer_id", "total_amount"},
+            []any{string(r.Key), decodeSum(r.Value)}
+    }),
+    sink.PostgresMode(sink.PostgresUpsert),
+    sink.PostgresConflictColumns("customer_id"),
+    sink.PostgresUpdateColumns("total_amount"),
+)
+```
+
+Options:
+
+| Option | Purpose |
+| --- | --- |
+| `PostgresDSN(dsn)` | Required connection string. |
+| `PostgresMapper(fn)` | Required record-to-row mapper. |
+| `PostgresBatchSize(n)` | Max rows per batch. |
+| `PostgresFlushInterval(d)` | Max wait for partial batch. |
+| `PostgresMaxRetries(n)` | Retry failed batches. |
+| `PostgresMode(PostgresInsert | PostgresUpsert)` | Insert or upsert writes. |
+| `PostgresConflictColumns(...cols)` | Upsert conflict target. |
+| `PostgresUpdateColumns(...cols)` | Upsert update columns; defaults to non-conflict inserted columns. |
+| `PostgresFailurePolicy(p)` | Drop, DLQ, or fail after retries. |
+| `PostgresDLQ(dlq)` | Dead-letter queue for failed rows. |

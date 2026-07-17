@@ -1,0 +1,11 @@
+{
+  "title": "Workflows",
+  "icon": "Workflow",
+  "pages": [
+    "overview",
+    "format",
+    "operators",
+    "secrets",
+    "cli"
+  ]
+}

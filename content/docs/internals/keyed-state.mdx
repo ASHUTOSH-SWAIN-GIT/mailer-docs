@@ -1,0 +1,50 @@
+---
+title: Keyed State
+description: How KeyBy, Reduce, and Window scope state.
+icon: Key
+---
+
+Keyed state means each selected key has independent operator state.
+
+```go
+stream.KeyBy(func(r types.Record) []byte {
+    return []byte(customerID(r))
+}).WithPartitions(8)
+```
+
+The selected key is both the routing key and the state key. Mailer writes it
+into `Record.Key` before stateful operators process the record.
+
+## Reduce state
+
+`Reduce` uses `ValueState("reduce")`.
+
+For normal records, the state key is:
+
+```text
+Record.Key
+```
+
+For windowed records, the state key is:
+
+```text
+Record.Key/window_start/window_end
+```
+
+That makes the same customer get separate accumulators for different windows.
+
+## Window state
+
+`Window` uses list-style state to buffer records per `(key, window)` until a
+watermark says the window can fire.
+
+For large window buffers, Pebble state keeps those records on disk instead of
+growing Go heap usage.
+
+## Per-worker isolation
+
+Every keyed worker gets cloned stateful operators. Each clone gets its own state
+backend owner id, such as `worker-0`, `worker-1`, and so on.
+
+This matters for checkpoint restore: the checkpoint stores state per owner and
+restores it into the same worker clone before processing resumes.

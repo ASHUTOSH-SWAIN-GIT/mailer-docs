@@ -1,0 +1,63 @@
+---
+title: Errors and Observability
+description: Failure policies, backpressure metrics, and the dashboard.
+icon: Activity
+---
+
+## Process errors
+
+Use `Process` when a transform can fail.
+
+```go
+stream.Process(fn,
+    operator.WithProcessFailurePolicy(operator.ProcFailureDLQ),
+    operator.WithProcessDLQ(dlqSink),
+)
+```
+
+Use `Fail` policies for data that must not be skipped. Use DLQ policies when
+bad records should be retained for later inspection.
+
+## Sink errors
+
+Kafka and Postgres sinks support retry and failure policy options. After retries
+are exhausted, the configured policy decides whether the record is dropped, sent
+to DLQ, or fails the pipeline.
+
+## Backpressure
+
+Mailer uses bounded channels between execution stages. If a sink is slow, its
+input edge fills. The previous stage blocks while sending, and that pressure
+propagates back to the source. This bounds memory without dropping records.
+
+Tune the edge capacity with:
+
+```go
+env := mailer.NewEnv().WithBufferSize(2048)
+```
+
+## Metrics
+
+Mailer records Prometheus metrics for pipeline, stages, edges, operators, and
+workers.
+
+Important metrics:
+
+| Metric | Meaning |
+| --- | --- |
+| `mailer_edge_queue_size` | Current buffered records on an edge. |
+| `mailer_edge_queue_capacity` | Edge capacity. |
+| `mailer_stage_records_in_total` | Records entering a stage. |
+| `mailer_stage_records_out_total` | Records leaving a stage. |
+| `mailer_stage_send_block_seconds_total` | Time blocked on downstream backpressure. |
+| `mailer_stage_workers` | Active worker count for a stage. |
+| `mailer_stage_errors_total` | Stage errors. |
+
+## Dashboard
+
+The dashboard package exposes pipeline structure and metrics for live
+inspection. Labels passed to SDK operators are used in dashboard metadata:
+
+```go
+stream.Filter(isCompleted, "completed-orders")
+```

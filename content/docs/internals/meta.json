@@ -1,0 +1,13 @@
+{
+  "title": "Internals",
+  "icon": "Cpu",
+  "pages": [
+    "architecture",
+    "execution-engine",
+    "keyed-state",
+    "pebble",
+    "checkpointing",
+    "exactly-once",
+    "windowing"
+  ]
+}

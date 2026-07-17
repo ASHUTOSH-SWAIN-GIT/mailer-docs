@@ -1,0 +1,80 @@
+---
+title: Getting Started
+description: Run Mailer locally with a declarative workflow or the Go SDK.
+icon: Rocket
+---
+
+## Prerequisites
+
+- Go installed.
+- A local checkout of `github.com/ASHUTOSH-SWAIN-GIT/mailer`.
+- Kafka and Postgres only for connector examples.
+
+## Run a local workflow
+
+The local examples use the generator source and stdout sink, so they do not need
+Kafka, Postgres, or environment variables.
+
+```bash
+git clone https://github.com/ASHUTOSH-SWAIN-GIT/mailer.git
+cd mailer
+go test ./...
+go run ./cmd/mailer-workflow --file examples/workflows/order-totals.yaml
+```
+
+The workflow filters completed orders, keys records by `customer.id`, and sums
+`amount` per customer.
+
+```yaml
+pipeline:
+  - id: completed
+    type: filter
+    filter: {field: status, operator: equals, value: completed}
+  - id: by-customer
+    type: keyBy
+    keyBy: {field: customer.id, partitions: 1}
+  - id: totals
+    type: reduce
+    reduce: {function: sum, field: amount}
+```
+
+## Inspect before running
+
+Use dry-run mode to parse, validate, resolve secret placeholders, compile, and
+describe the pipeline without executing it.
+
+```bash
+go run ./cmd/mailer-workflow --file examples/workflows/order-totals.yaml --dry-run --describe
+```
+
+## Go SDK
+
+Use the SDK when you need custom functions or direct Go control.
+
+```go
+env := mailer.NewEnv()
+
+env.FromSource(source.NewGeneratorSource(records)).
+    Filter(func(r types.Record) bool {
+        return bytes.Contains(r.Value, []byte(`"status":"completed"`))
+    }, "completed").
+    KeyBy(func(r types.Record) []byte {
+        return []byte("customer-id")
+    }, "by-customer").
+    Reduce(sumReducer, "totals").
+    ToSink(sink.NewStdoutSink())
+
+if err := env.Execute(context.Background()); err != nil {
+    log.Fatal(err)
+}
+```
+
+For built-in JSON-field operations, prefer declarative workflows. Use the SDK
+for transforms that need arbitrary Go code.
+
+## Next steps
+
+- [SDK Overview](/docs/sdk/overview)
+- [Workflow Format](/docs/workflows/format)
+- [Examples](/docs/examples)
+- [Execution Engine](/docs/internals/execution-engine)

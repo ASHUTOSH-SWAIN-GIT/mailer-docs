@@ -1,0 +1,61 @@
+---
+title: Exactly Once
+description: Kafka-to-Kafka exactly-once coordination.
+icon: ShieldCheck
+---
+
+End-to-end exactly-once is supported for Kafka source to transactional Kafka
+sink with checkpointing.
+
+```go
+src := source.NewKafkaSource(
+    source.KafkaBrokers("localhost:9092"),
+    source.KafkaTopic("orders"),
+    source.KafkaGroupID("orders-eo"),
+    source.KafkaExactlyOnce(),
+)
+
+out := sink.NewTxnKafkaSink(
+    sink.TxnKafkaBrokers("localhost:9092"),
+    sink.TxnKafkaTopic("order-totals"),
+    sink.TxnKafkaTransactionalID("order-totals-pipeline"),
+)
+
+env := mailer.NewEnv().
+    WithCheckpointing(30*time.Second, checkpoint.NewFileStorage("./checkpoints"))
+```
+
+## Requirements
+
+- Kafka source uses `KafkaExactlyOnce`.
+- Sink is `TxnKafkaSink`.
+- Checkpointing is enabled.
+- Source supports offset checkpointing.
+- Transactional id is stable across restarts and unique per pipeline instance.
+- Output consumers use `isolation.level=read_committed`.
+
+## Protocol shape
+
+Each checkpoint interval corresponds to a transaction.
+
+1. The transactional sink writes output into an open Kafka transaction.
+2. A checkpoint barrier captures source offsets and operator state.
+3. The coordinator pre-commits the sink.
+4. The sink transaction commits.
+5. The checkpoint is marked complete.
+6. Source offsets can be committed for broker lag visibility.
+
+The checkpoint file acts as the transaction log.
+
+## Crash windows
+
+The marker topic helps recovery resolve crashes around transaction commit and
+checkpoint completion. If recovery cannot determine whether a transaction
+committed, Mailer refuses to start rather than guessing and risking duplicates
+or loss.
+
+## Latency tradeoff
+
+Output becomes visible when a transaction commits, which happens at checkpoint
+boundaries. A 30 second checkpoint interval means output visibility can lag by
+up to roughly that interval.

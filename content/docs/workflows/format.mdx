@@ -1,0 +1,91 @@
+---
+title: Workflow Format
+description: The YAML and JSON structure accepted by the workflow compiler.
+icon: Braces
+---
+
+## Top-level fields
+
+```yaml
+name: my-pipeline
+version: "1"
+env: {}
+source: {}
+pipeline: []
+sink: {}
+```
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `name` | Optional | Used in logs, metrics, and derived state directories. |
+| `version` | Optional | Currently `"1"`. |
+| `env` | Optional | Runtime configuration. |
+| `source` | Required | One source. |
+| `pipeline` | Optional | Ordered operator list. |
+| `sink` | Required | One sink. |
+
+Parsing is strict. Unknown keys are rejected, which catches typos before a
+workflow can run.
+
+## Durations
+
+Durations use Go duration strings:
+
+```yaml
+shutdownTimeout: 30s
+checkpointing:
+  interval: 5m
+```
+
+Valid examples include `500ms`, `30s`, `5m`, and `1h30m`.
+
+## Environment
+
+```yaml
+env:
+  bufferSize: 1024
+  shutdownTimeout: 30s
+  checkpointing:
+    interval: 30s
+    dir: ./data/checkpoints
+  state:
+    backend: pebble
+    dir: ./data/state
+```
+
+| Field | Default | SDK equivalent |
+| --- | --- | --- |
+| `bufferSize` | `1024` | `WithBufferSize` |
+| `shutdownTimeout` | `30s` | `WithShutdownTimeout` |
+| `checkpointing.interval` | Off | `WithCheckpointing` |
+| `checkpointing.dir` | Required when checkpointing is configured | `checkpoint.NewFileStorage` |
+| `state.backend` | `memory` | `WithStateBackend` |
+| `state.dir` | Required for `pebble` | Pebble root directory |
+
+## Source
+
+```yaml
+source:
+  type: kafka
+  kafka:
+    brokers: [localhost:9092]
+    topic: orders
+    groupID: orders
+    startFrom: earliest
+    exactlyOnce: true
+    deserialize: json
+    watermark:
+      maxOutOfOrderness: 1s
+      interval: 500ms
+```
+
+Source `type` can be `generator`, `slice`, or `kafka`.
+
+## Sink
+
+```yaml
+sink:
+  type: stdout
+```
+
+Sink `type` can be `stdout`, `blackhole`, `kafka`, `txnKafka`, or `postgres`.

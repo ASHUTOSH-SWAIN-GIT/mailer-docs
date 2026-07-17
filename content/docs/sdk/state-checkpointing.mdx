@@ -1,0 +1,62 @@
+---
+title: State and Checkpointing
+description: SDK configuration for state backends and checkpoint recovery.
+icon: Save
+---
+
+State is internal to Mailer operators. User code does not currently access
+`ValueState` or `ListState` directly. `Reduce` uses value state for
+accumulators; `Window` uses list state for buffered records and window metadata.
+
+## In-memory state
+
+In-memory state is the default. It is fastest for small state and tests.
+
+```go
+env := mailer.NewEnv()
+```
+
+When checkpointing is enabled, in-memory state is serialized into checkpoint
+data.
+
+## Pebble state
+
+Pebble state is disk-backed and is created per state owner.
+
+```go
+env := mailer.NewEnv().
+    WithStateBackend(state.Pebble("/var/lib/mailer/state"))
+```
+
+Each top-level stateful operator or keyed-worker clone gets an isolated backend
+directory. That isolation prevents key collisions between operators and workers.
+
+## Checkpointing
+
+```go
+env := mailer.NewEnv().
+    WithCheckpointing(
+        30*time.Second,
+        checkpoint.NewFileStorage("/var/lib/mailer/checkpoints"),
+    )
+```
+
+Checkpointing captures:
+
+- Source offsets.
+- Barrier-time snapshots from stateful operators.
+- Transactional sink state when exactly-once Kafka is configured.
+
+On restart, `Execute` loads the latest checkpoint, restores source offsets,
+restores stateful operator clones, then starts processing again.
+
+## Native Pebble checkpoints
+
+Pebble implements `state.Checkpointable`. At a checkpoint barrier, Mailer asks
+the backend to checkpoint its on-disk database into the checkpoint directory.
+Pebble flushes recent writes, then creates a hard-link checkpoint. This keeps
+checkpoint metadata small and makes checkpoint cost scale with changed data
+rather than total state size.
+
+The live Pebble working directory is disposable. Durability comes from completed
+checkpoints.

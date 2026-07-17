@@ -1,0 +1,43 @@
+---
+title: Workflow CLI
+description: Run and inspect workflow files.
+icon: Terminal
+---
+
+The CLI is part of the Mailer repository.
+
+```bash
+go run ./cmd/mailer-workflow --file examples/workflows/order-totals.yaml
+```
+
+## Flags
+
+| Flag | Purpose |
+| --- | --- |
+| `--file` | YAML or JSON workflow path. Required. |
+| `--data-dir` | Base data directory for state and checkpoint defaults. |
+| `--dry-run` | Parse, validate, resolve, and compile without executing. |
+| `--describe` | Print the compiled pipeline description. |
+| `--quiet` | Suppress the summary. |
+
+## Dry run
+
+```bash
+go run ./cmd/mailer-workflow \
+  --file examples/workflows/order-totals.yaml \
+  --dry-run \
+  --describe
+```
+
+Use dry run before connecting service-backed workflows to Kafka or Postgres.
+
+## Programmatic runner
+
+```go
+result, err := runner.RunFile(ctx, "workflow.yaml", runner.Options{
+    BaseDataDir: "./data",
+})
+```
+
+Use `CompileFile` when you want the compiled environment and metadata without
+executing the pipeline.

@@ -1,0 +1,65 @@
+---
+title: Pebble State Backend
+description: Disk-backed LSM state and native checkpoints.
+icon: HardDrive
+---
+
+Pebble is Mailer's durable state backend for larger state sets. It stores state
+in a local LSM database instead of Go maps.
+
+## Why Pebble
+
+In-memory state is fast and simple, but heap usage grows with the number of
+keys and buffered window records. Pebble shifts state to disk, reducing heap
+pressure and enabling native filesystem checkpoints.
+
+Use Pebble when:
+
+- Key count is large.
+- Window buffers are large.
+- Restart recovery matters.
+- Checkpoint size needs to stay small.
+
+Use memory when:
+
+- State is small.
+- You are testing locally.
+- Lowest per-record latency matters more than durability.
+
+## Owner directories
+
+The engine creates a backend per state owner:
+
+- Top-level stateful operator: `op-<index>`.
+- Keyed worker clone: `worker-<index>`.
+
+Each owner gets an isolated Pebble DB under the configured state root.
+
+## Write path
+
+Pebble writes use unsynced writes for the fast path. The working DB is treated
+as disposable. Durability comes from completed checkpoints, not from the live
+working directory alone.
+
+## Native checkpoints
+
+Pebble implements `Checkpointable`.
+
+At a checkpoint barrier:
+
+1. The backend flushes recent writes.
+2. Pebble creates a checkpoint directory using hard links.
+3. The checkpoint stores a small state reference instead of serializing all
+   key/value data.
+
+This makes checkpoint cost scale with changed data since the last flush rather
+than total state size.
+
+## Restore
+
+On recovery, the live Pebble DB is closed, the live directory is wiped, the
+checkpoint directory is copied back, and Pebble is reopened.
+
+If a pipeline is force-aborted and late goroutines touch a closed backend,
+operations become no-ops instead of panicking. Their output is post-abort data
+and never becomes part of a completed checkpoint.

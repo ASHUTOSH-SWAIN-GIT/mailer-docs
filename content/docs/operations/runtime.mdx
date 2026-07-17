@@ -1,0 +1,51 @@
+---
+title: Runtime Operations
+description: Running pipelines, state directories, graceful shutdown, and local-only constraints.
+icon: Play
+---
+
+Mailer runs inside one Go process. There is no job server or distributed cluster
+runtime yet.
+
+## Local execution
+
+Today, workflow source files are local files:
+
+```bash
+go run ./cmd/mailer-workflow --file examples/workflows/order-totals.yaml
+```
+
+The CLI reads the workflow from disk, compiles it in-process, and executes it in
+the same process.
+
+## Data directories
+
+Use `--data-dir` or workflow `env` fields to control state and checkpoint
+locations.
+
+```bash
+go run ./cmd/mailer-workflow \
+  --file workflow.yaml \
+  --data-dir ./data
+```
+
+Two workflows with different names derive isolated state directories under the
+same base directory.
+
+## Graceful shutdown
+
+On context cancellation:
+
+1. The source stops producing.
+2. In-flight records drain through the stages.
+3. Checkpointing can save a final barrier.
+4. The sink drains.
+5. If drain exceeds the shutdown timeout, stages are force-aborted.
+
+## Production guidance
+
+- Use stable workflow names for stateful jobs.
+- Store checkpoint and Pebble directories on persistent local disks.
+- Use `txnKafka` only with stable transactional ids.
+- Monitor edge queue sizes to find bottlenecks.
+- Use `--dry-run --describe` before running service-backed workflow changes.

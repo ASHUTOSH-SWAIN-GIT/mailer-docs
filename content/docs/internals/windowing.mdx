@@ -1,0 +1,50 @@
+---
+title: Windowing Internals
+description: How Mailer assigns, buffers, fires, and aggregates windows.
+icon: TimerReset
+---
+
+Windowing is a two-step process:
+
+1. The window operator assigns and buffers records.
+2. A downstream operator, usually `Reduce`, aggregates fired window records.
+
+```text
+KeyBy -> Window -> Reduce
+```
+
+## Assignment
+
+The assigner returns one or more windows for a record timestamp.
+
+- Tumbling returns exactly one fixed window.
+- Sliding returns all overlapping fixed windows.
+- Session returns an initial gap window that can merge with nearby sessions.
+
+## Buffering
+
+Window state is keyed by both record key and window bounds. Buffered records are
+stored in the configured state backend.
+
+With memory state, buffered records live in Go heap. With Pebble state, records
+are written to disk.
+
+## Firing
+
+Watermarks drive firing. When a watermark timestamp reaches or passes a
+window's end, the window is complete enough to emit.
+
+The window operator emits records with `window_start` and `window_end` headers.
+Downstream `Reduce` includes those headers in its state key so aggregations are
+scoped per window.
+
+## Late records
+
+Records for windows that already fired are currently dropped. Side outputs for
+late records and configurable allowed lateness are roadmap items.
+
+## Idle timeout
+
+`WindowWithIdleTimeout` can fire remaining windows when no records arrive for a
+configured duration. This is useful for local examples and tests where there may
+not be another watermark.

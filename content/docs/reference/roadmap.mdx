@@ -1,0 +1,29 @@
+---
+title: Roadmap
+description: Known future work after the current implemented phases.
+icon: Map
+---
+
+Implemented:
+
+- Core SDK pipeline.
+- Declarative workflow parser, validator, compiler, runner, and CLI.
+- Environment-backed secrets.
+- Kafka and Postgres connectors.
+- Postgres upserts.
+- Keyed state and keyed parallelism.
+- Tumbling, sliding, and session windows.
+- Watermarks.
+- Memory and Pebble state.
+- Checkpoint and recovery.
+- Kafka-to-Kafka exactly-once.
+- Metrics and dashboard metadata.
+
+Likely next areas:
+
+- Allowed lateness and side outputs for late records.
+- Multi-stream joins.
+- Typed `Stream[T]` API.
+- Function registry for declarative `map`, `flatMap`, and `process`.
+- Job server and stored connections.
+- Remote workflow sources beyond local files.

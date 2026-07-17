@@ -1,0 +1,109 @@
+---
+title: Workflow Operators
+description: Declarative operators and their typed config blocks.
+icon: Split
+---
+
+Each operator has an `id`, a `type`, and exactly one typed config block matching
+the type.
+
+```yaml
+- id: completed
+  type: filter
+  filter:
+    field: status
+    operator: equals
+    value: completed
+```
+
+## Supported operators
+
+| Type | Config |
+| --- | --- |
+| `filter` | `{field, operator, value}` |
+| `selectFields` | `{fields: [...]}` |
+| `renameFields` | `{renames: [{from, to}]}` |
+| `setFields` | `{sets: [{field, value}]}` |
+| `keyBy` | `{field, partitions}` |
+| `reduce` | `{function, field}` |
+| `window` | `{type, size, slide, gap, offset, idleTimeout}` |
+
+## Filter
+
+```yaml
+- id: completed
+  type: filter
+  filter: {field: status, operator: equals, value: completed}
+```
+
+Filters operate on dot-separated JSON paths such as `customer.id`.
+
+## Field operations
+
+```yaml
+- id: project
+  type: selectFields
+  selectFields:
+    fields: [customer.id, amount]
+
+- id: rename
+  type: renameFields
+  renameFields:
+    renames:
+      - {from: customer.id, to: customer_id}
+
+- id: mark
+  type: setFields
+  setFields:
+    sets:
+      - {field: pipeline, value: order-totals}
+```
+
+## KeyBy
+
+```yaml
+- id: by-customer
+  type: keyBy
+  keyBy: {field: customer.id, partitions: 8}
+```
+
+`keyBy` sets the keyed-state key from the selected field. Downstream `reduce`
+and `window` state is scoped by that selected key.
+
+## Reduce
+
+```yaml
+- id: totals
+  type: reduce
+  reduce: {function: sum, field: amount}
+```
+
+Supported functions:
+
+| Function | Field required | Output |
+| --- | --- | --- |
+| `count` | No | `{"count":N}` |
+| `sum` | Yes | `{"sum":N}` |
+
+## Window
+
+```yaml
+- id: five-minute
+  type: window
+  window: {type: tumbling, size: 5m}
+```
+
+| Type | Required fields |
+| --- | --- |
+| `tumbling` | `size` |
+| `sliding` | `size`, `slide` |
+| `session` | `gap` |
+
+Use `offset` to shift fixed window alignment. Use `idleTimeout` for finite or
+idle streams where no more watermarks are expected.
+
+## Ordering rules
+
+- `reduce` requires a previous `keyBy`.
+- `window` requires a previous `keyBy`.
+- Windowed aggregation is expressed as `keyBy -> window -> reduce`.

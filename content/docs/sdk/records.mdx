@@ -1,0 +1,78 @@
+---
+title: Records
+description: The data model that moves through every Mailer pipeline.
+icon: Rows3
+---
+
+Every source emits `types.Record`; every operator receives and emits records;
+every sink consumes records.
+
+```go
+type Record struct {
+    Key       []byte
+    Value     []byte
+    Timestamp time.Time
+    Offset    int64
+    Partition int
+    Headers   map[string][]byte
+    Parsed    any
+
+    IsWatermark  bool
+    IsBarrier    bool
+    CheckpointID string
+}
+```
+
+## Data records
+
+Data records carry a `Key`, `Value`, `Timestamp`, optional source position, and
+metadata headers.
+
+```go
+r := types.NewRecord([]byte("customer-1"), []byte(`{"amount":10}`))
+r = r.WithTimestamp(time.Now().UTC())
+r = r.WithHeader("trace-id", []byte("abc"))
+```
+
+## Key
+
+`Key` is the state key used by `Reduce` and `Window`. After `KeyBy`, Mailer
+writes the selected key back into `Record.Key` before keyed operators run.
+
+That means this pipeline aggregates by customer id, not by the original source
+key:
+
+```go
+stream.KeyBy(func(r types.Record) []byte {
+    return extractCustomerID(r.Value)
+}).Reduce(sumAmounts)
+```
+
+## Value and Parsed
+
+`Value` is always the raw byte payload. `Parsed` is optional and is set by
+deserializers or user code when a typed payload is convenient.
+
+Kafka serializers prefer `Parsed` when it is set, otherwise they serialize
+`Value`.
+
+## Timestamp
+
+Window assigners use `Timestamp` as event time. Kafka watermarks use record
+timestamps to decide when windows are ready to fire.
+
+## Offset and Partition
+
+Kafka sources set `Partition` and `Offset`. Checkpointing stores those positions
+so recovery can resume from the last completed checkpoint.
+
+## Marker records
+
+Watermarks and barriers are special records.
+
+| Marker | Field | Purpose |
+| --- | --- | --- |
+| Watermark | `IsWatermark` | Says no earlier event-time records are expected. Used to fire windows. |
+| Barrier | `IsBarrier`, `CheckpointID` | Marks a checkpoint cut. Stateful operators snapshot when the barrier passes. |
+
+Operators forward markers without applying normal record transforms.

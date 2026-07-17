@@ -1,0 +1,75 @@
+---
+title: Kafka Operations
+description: Kafka source, sink, auth, watermarks, and exactly-once notes.
+icon: RadioTower
+---
+
+## Source basics
+
+```yaml
+source:
+  type: kafka
+  kafka:
+    brokers: [localhost:9092]
+    topic: orders
+    groupID: order-totals
+    startFrom: earliest
+```
+
+Use `topics` instead of `topic` for multi-topic consumer-group mode.
+
+## Authentication
+
+```yaml
+sasl:
+  mechanism: plain
+  username: ${KAFKA_USERNAME}
+  password: ${KAFKA_PASSWORD}
+tls:
+  caFile: ca.pem
+  insecureSkipVerify: false
+```
+
+Prefer secret placeholders for credentials.
+
+## Watermarks
+
+```yaml
+watermark:
+  maxOutOfOrderness: 5s
+  interval: 500ms
+```
+
+Watermarks are required for event-time windows to fire continuously on Kafka
+streams.
+
+## Plain Kafka sink
+
+```yaml
+sink:
+  type: kafka
+  kafka:
+    brokers: [localhost:9092]
+    topic: out
+    batchSize: 100
+    batchTimeout: 1s
+    acks: leader
+    maxRetries: 3
+    onError: drop
+```
+
+Plain Kafka sinks are at-least-once when checkpointing is enabled.
+
+## Transactional Kafka sink
+
+```yaml
+sink:
+  type: txnKafka
+  txnKafka:
+    brokers: [localhost:9092]
+    topic: order-totals
+    transactionalID: order-totals-pipeline
+```
+
+Use a stable `transactionalID` per pipeline instance. A second process with the
+same id fences the first.

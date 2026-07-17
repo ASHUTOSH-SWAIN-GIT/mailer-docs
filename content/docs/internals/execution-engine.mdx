@@ -1,0 +1,69 @@
+---
+title: Execution Engine
+description: Planner, stages, bounded edges, backpressure, and shutdown.
+icon: GitBranch
+---
+
+When `Execute` starts, Mailer builds a plan from the source, operator chain, and
+sink. The planner groups compatible operators into stages and connects stages
+with bounded edges.
+
+```text
+[Source] -> edge -> [Map -> Filter] -> edge -> [KeyBy: Window -> Reduce x N] -> edge -> [Sink]
+```
+
+## Stages
+
+| Stage | What it does |
+| --- | --- |
+| Source stage | Reads records from the source. |
+| Stateless stage | Runs consecutive stateless operators as direct function calls. |
+| Keyed stage | Routes records to keyed workers and runs stateful cloned operators. |
+| Sink stage | Writes final records to the sink. |
+
+Inside a stateless stage, operators are chained without channel hops. Channels
+exist between stages only.
+
+## Bounded edges and backpressure
+
+Edges are bounded channels. Default capacity is `1024`; configure it with
+`WithBufferSize`.
+
+When an edge fills, the upstream stage blocks on send. That pressure propagates
+back through the pipeline until the source stops fetching. This keeps memory
+bounded and avoids silent drops.
+
+## Stateless parallelism
+
+`WithParallelism(n)` creates workers for the most recent stateless operator.
+Use it for CPU-heavy transforms.
+
+Ordering across workers is not preserved. Use parallelism only when output
+ordering does not matter.
+
+## Keyed stages
+
+`KeyBy` starts a keyed stage. The router:
+
+1. Selects a key from the record.
+2. Writes that selected key into `Record.Key`.
+3. Hashes the selected key.
+4. Sends the record to one of N keyed workers.
+
+Each keyed worker owns clones of downstream stateful operators and isolated
+state backends.
+
+## Marker alignment
+
+Watermarks and checkpoint barriers are broadcast to every worker. The keyed
+stage merge emits each marker once all workers have reached it. This prevents
+post-barrier records from overtaking a barrier and keeps snapshots consistent.
+
+## Shutdown
+
+Shutdown is two-phase:
+
+1. Context cancellation stops the source.
+2. Downstream stages drain in-flight records through channel closes.
+3. A final checkpoint barrier can ride the drain when checkpointing is enabled.
+4. If drain exceeds `WithShutdownTimeout`, blocked stages are force-aborted.

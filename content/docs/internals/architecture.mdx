@@ -1,0 +1,50 @@
+---
+title: Architecture
+description: Mailer's single-process stream processing architecture.
+icon: Network
+---
+
+Mailer is a single-process, multi-goroutine stream processor. It is not a
+cluster runtime. You embed it in a Go process, build one pipeline, and call
+`Execute`.
+
+```text
+Source -> Operators -> Sink
+             |
+          State
+             |
+        Checkpoints
+```
+
+## Major packages
+
+| Package | Responsibility |
+| --- | --- |
+| `mailer` | `StreamExecutionEnv`, fluent builder, execution and checkpoint glue. |
+| `types` | `Record`, watermark, and barrier marker model. |
+| `source` | Kafka, generator, and slice sources. |
+| `operator` | Map, flatMap, filter, process, keyBy, reduce, window. |
+| `pipeline` | Planner, stages, bounded edges, keyed workers, marker alignment. |
+| `state` | Memory and Pebble state backends. |
+| `checkpoint` | Checkpoint data, file storage, coordinator. |
+| `sink` | Kafka, transactional Kafka, Postgres, stdout, blackhole. |
+| `workflow` | Declarative YAML/JSON parsing, validation, secrets, compiler, runner. |
+| `observability` | Prometheus metrics and dashboard. |
+
+## Design choices
+
+- Single process instead of a cluster.
+- Bounded channels for backpressure.
+- Keyed state split across per-worker backend instances.
+- Barrier-based checkpoints inspired by Chandy-Lamport.
+- Transactional Kafka sink for end-to-end exactly-once.
+- Pebble backend for large state without large heap usage.
+
+## Failure boundary
+
+Mailer can recover source offsets and operator state from checkpoints. Output
+guarantees depend on the sink:
+
+- Transactional Kafka can be exactly-once.
+- Plain sinks are at-least-once after recovery.
+- Without checkpointing, restart behavior depends on source start position.

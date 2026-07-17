@@ -1,0 +1,126 @@
+---
+title: Operators
+description: Transform, filter, partition, aggregate, and handle errors.
+icon: Split
+---
+
+Operators are appended to a stream through the fluent SDK.
+
+## Map
+
+`Map` transforms one input record into one output record.
+
+```go
+stream.Map(func(r types.Record) types.Record {
+    r.Value = bytes.ToUpper(r.Value)
+    return r
+}, "upper")
+```
+
+Returning the zero `types.Record{}` drops the record.
+
+## FlatMap
+
+`FlatMap` can emit zero, one, or many records for each input.
+
+```go
+stream.FlatMap(func(r types.Record) []types.Record {
+    words := strings.Fields(string(r.Value))
+    out := make([]types.Record, 0, len(words))
+    for _, word := range words {
+        out = append(out, types.NewRecord([]byte(word), []byte(`{"word":"`+word+`"}`)))
+    }
+    return out
+}, "split")
+```
+
+## Filter
+
+```go
+stream.Filter(func(r types.Record) bool {
+    return bytes.Contains(r.Value, []byte(`"status":"completed"`))
+}, "completed")
+```
+
+## Process
+
+`Process` is the error-aware transform. It is useful when validation,
+enrichment, or parsing can fail.
+
+```go
+stream.Process(func(r types.Record) (types.Record, error) {
+    if len(r.Value) == 0 {
+        return r, fmt.Errorf("empty payload")
+    }
+    return enrich(r)
+},
+    operator.WithProcessFailurePolicy(operator.ProcFailureDLQ),
+    operator.WithProcessDLQ(dlqSink),
+)
+```
+
+Failure policies:
+
+| Policy | Behavior |
+| --- | --- |
+| Drop | Drop failed records. |
+| DLQ | Send failed records to a dead-letter sink. |
+| Fail | Fail the pipeline. |
+
+## Parallelism
+
+`WithParallelism` applies to the most recent stateless operator.
+
+```go
+stream.Map(cpuHeavy, "parse").WithParallelism(4)
+```
+
+Operators with the same parallelism can share one stage. With parallelism
+greater than 1, record order across workers is not preserved.
+
+## KeyBy
+
+`KeyBy` starts a keyed stage.
+
+```go
+stream.KeyBy(func(r types.Record) []byte {
+    return r.Key
+}, "by-key").WithPartitions(8)
+```
+
+Every record with the same selected key goes to the same keyed worker. Mailer
+also writes the selected key to `Record.Key` before downstream stateful
+operators run, so `Reduce` and `Window` use the selected key for state.
+
+## Reduce
+
+`Reduce` maintains a per-key byte accumulator.
+
+```go
+stream.KeyBy(customerKey).
+    Reduce(func(accum []byte, curr types.Record) []byte {
+        total := decodeTotal(accum)
+        total += amount(curr)
+        return encodeTotal(total)
+    }, "sum")
+```
+
+`accum` is `nil` on the first record for a key. The returned accumulator is
+stored and emitted downstream as the output record value.
+
+When a record has `window_start` and `window_end` headers, reduce state is
+scoped by `(key, window)` instead of just key.
+
+## Window
+
+`Window` buffers records by key and event-time window. When watermarks pass a
+window end, the operator emits the buffered records for downstream aggregation.
+
+```go
+stream.KeyBy(customerKey).
+    Window(window.NewTumbling(5*time.Minute), "5m").
+    Reduce(sumAmounts, "sum")
+```
+
+Use `WindowWithIdleTimeout` for examples or finite streams where no later
+watermark will arrive.

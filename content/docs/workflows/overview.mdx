@@ -1,0 +1,33 @@
+---
+title: Workflows Overview
+description: Declarative YAML and JSON pipelines.
+icon: Workflow
+---
+
+Workflows define common pipelines without Go code. They support built-in
+JSON-field operations, sources, sinks, state, checkpointing, and
+environment-backed secrets.
+
+```text
+workflow.yaml -> Parse -> Validate -> Resolve Secrets -> Compile -> Execute
+```
+
+The compiler builds the same SDK objects used by the fluent Go API. The runtime
+path is shared after compilation.
+
+## What workflows are good for
+
+- Kafka or generator source to stdout, Kafka, transactional Kafka, Postgres, or
+  blackhole sink.
+- JSON-field filtering and projection.
+- Field rename and static field set operations.
+- `keyBy` keyed state.
+- Built-in `count` and `sum` reductions.
+- Tumbling, sliding, and session windows.
+- Memory or Pebble state.
+- Checkpointing and exactly-once Kafka validation.
+
+## What workflows do not support yet
+
+`map`, `flatMap`, and `process` exist in the schema as `ref`-based placeholders,
+but there is no function registry yet. Use the Go SDK for arbitrary code.

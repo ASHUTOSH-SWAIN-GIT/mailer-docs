@@ -1,0 +1,93 @@
+---
+title: Windows
+description: Tumbling, sliding, and session windows in the SDK.
+icon: Timer
+---
+
+Windows make an unbounded stream finite enough to aggregate. Mailer windows use
+event time from `Record.Timestamp`, not wall-clock processing time.
+
+## Tumbling windows
+
+Tumbling windows are fixed-size and non-overlapping. Each record belongs to
+exactly one window.
+
+```go
+stream.KeyBy(customerKey).
+    Window(window.NewTumbling(5*time.Minute)).
+    Reduce(sumAmounts)
+```
+
+For a 5 minute window aligned to the Unix epoch:
+
+```text
+[00:00, 00:05), [00:05, 00:10), [00:10, 00:15)
+```
+
+A record at `00:07` goes into `[00:05, 00:10)`.
+
+Use `WithOffset` to shift boundaries:
+
+```go
+window.NewTumbling(5*time.Minute).WithOffset(1 * time.Minute)
+```
+
+This starts windows at `:01`, `:06`, `:11`, and so on.
+
+## Sliding windows
+
+Sliding windows are fixed-size and overlapping. One record can belong to
+multiple windows.
+
+```go
+stream.KeyBy(customerKey).
+    Window(window.NewSliding(5*time.Minute, 1*time.Minute)).
+    Reduce(sumAmounts)
+```
+
+With size 5 minutes and slide 1 minute, a record at `00:03` can belong to:
+
+```text
+[00:00, 00:05)
+[00:01, 00:06)
+[00:02, 00:07)
+[00:03, 00:08)
+```
+
+Sliding windows are useful for rolling metrics. They cost more state than
+tumbling windows because records are copied into multiple windows.
+
+## Session windows
+
+Session windows are variable-size and close after an inactivity gap.
+
+```go
+stream.KeyBy(userKey).
+    Window(window.NewSession(30*time.Second)).
+    Reduce(countEvents)
+```
+
+Example with a `30s` gap:
+
+```text
+00:00 -> session [00:00, 00:30)
+00:15 -> same session expands to [00:00, 00:45)
+01:30 -> new session [01:30, 02:00)
+```
+
+The window operator merges overlapping sessions as new records arrive.
+
+## Watermarks
+
+Watermarks tell the window operator that earlier event-time records are no
+longer expected. Kafka can generate watermarks with bounded out-of-orderness:
+
+```go
+source.KafkaWithWatermarks(5 * time.Second)
+```
+
+If the maximum timestamp seen is `00:10`, the watermark is `00:05`. Windows
+ending at or before `00:05` can fire.
+
+Late records are dropped by the current implementation. Allowed-lateness side
+outputs are still roadmap work.

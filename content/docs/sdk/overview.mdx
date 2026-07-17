@@ -1,0 +1,62 @@
+---
+title: SDK Overview
+description: The Go API for building Mailer pipelines.
+icon: Code
+---
+
+The SDK is the primary API for custom pipelines. A program creates a
+`StreamExecutionEnv`, attaches one source, appends operators through a fluent
+`Stream`, attaches one sink, then calls `Execute`.
+
+```go
+env := mailer.NewEnv()
+
+env.FromSource(src).
+    Map(parse, "parse").
+    Filter(valid, "valid").
+    KeyBy(customerKey, "by-customer").WithPartitions(8).
+    Window(window.NewTumbling(5 * time.Minute), "5m").
+    Reduce(sumAmounts, "sum").
+    ToSink(out)
+
+if err := env.Execute(context.Background()); err != nil {
+    log.Fatal(err)
+}
+```
+
+The pipeline is lazy. `FromSource`, operator calls, and `ToSink` only build the
+graph. Nothing reads, processes, writes, checkpoints, or opens most external
+connections until `Execute`.
+
+## Environment options
+
+| Method | Purpose | Default |
+| --- | --- | --- |
+| `NewEnv()` | Create a new execution environment. | Buffer size 1024, shutdown timeout 30s. |
+| `WithBufferSize(n)` | Set bounded edge capacity between stages. | `1024` |
+| `WithShutdownTimeout(d)` | Max drain time after context cancellation. | `30s` |
+| `WithCheckpointing(interval, storage)` | Enable periodic barrier checkpoints. | Off |
+| `WithStateBackend(factory)` | Create per-owner state backends. | In-memory operator-local state |
+
+## Stream methods
+
+| Method | Kind | Notes |
+| --- | --- | --- |
+| `Map(fn, label...)` | Stateless 1:1 transform | Returning zero `Record` drops the record. |
+| `FlatMap(fn, label...)` | Stateless 1:N transform | Empty slice drops the record. |
+| `Filter(fn, label...)` | Stateless predicate | `false` drops the record. |
+| `Process(fn, opts...)` | Error-aware transform | Supports drop, DLQ, and fail policies. |
+| `WithParallelism(n)` | Stateless worker pool | Call directly after Map/FlatMap/Filter/Process. Order across workers is not preserved. |
+| `KeyBy(fn, label...)` | Keyed stage boundary | Required before `Window` and `Reduce`. |
+| `WithPartitions(n)` | Keyed workers | Call directly after `KeyBy`. |
+| `Window(assigner, label...)` | Time windows | Use tumbling, sliding, or session assigners. |
+| `WindowWithIdleTimeout(assigner, d, label...)` | Window with idle firing | Useful for finite examples or idle streams. |
+| `Reduce(fn, label...)` | Per-key aggregation | Emits updated accumulator on every input record/window output. |
+| `ToSink(sink)` | End of pipeline | Returns the environment. |
+
+## When to use SDK vs workflows
+
+Use declarative workflows when the pipeline can be expressed with built-in
+JSON-field operations. Use the SDK when you need arbitrary Go code, custom
+record parsing, custom aggregation state formats, or direct control over
+connectors and error handling.

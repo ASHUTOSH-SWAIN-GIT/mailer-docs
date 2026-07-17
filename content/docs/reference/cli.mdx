@@ -1,0 +1,25 @@
+---
+title: CLI Reference
+description: Workflow runner command reference.
+icon: Terminal
+---
+
+```bash
+go run ./cmd/mailer-workflow --file workflow.yaml [flags]
+```
+
+| Flag | Required | Description |
+| --- | --- | --- |
+| `--file` | Yes | YAML or JSON workflow path. |
+| `--data-dir` | No | Base data directory for derived runtime paths. |
+| `--dry-run` | No | Compile only; do not execute. |
+| `--describe` | No | Print compiled pipeline description. |
+| `--quiet` | No | Suppress summary output. |
+
+Examples:
+
+```bash
+go run ./cmd/mailer-workflow --file examples/workflows/wordcount.yaml
+go run ./cmd/mailer-workflow --file examples/workflows/order-totals.yaml --dry-run --describe
+go run ./cmd/mailer-workflow --file workflow.yaml --data-dir ./data
+```

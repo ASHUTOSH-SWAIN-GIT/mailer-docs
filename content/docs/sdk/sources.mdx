@@ -1,0 +1,115 @@
+---
+title: Sources
+description: How records enter Mailer pipelines.
+icon: DatabaseZap
+---
+
+Sources implement the `source.Source` interface and push records into the
+pipeline.
+
+## Generator source
+
+Use generator source for local examples and tests.
+
+```go
+records := []types.Record{
+    types.NewRecord([]byte("a"), []byte(`{"word":"hello"}`)),
+    types.NewRecord([]byte("b"), []byte(`{"word":"mailer"}`)),
+}
+
+src := source.NewGeneratorSource(records)
+```
+
+## Slice source
+
+Slice source is similar to generator source and is useful in tests where you
+already have records in memory.
+
+## Kafka source
+
+Kafka is the production streaming source.
+
+```go
+src := source.NewKafkaSource(
+    source.KafkaBrokers("localhost:9092"),
+    source.KafkaTopic("orders"),
+    source.KafkaGroupID("order-processor"),
+    source.KafkaStartFrom(source.OffsetEarliest),
+    source.KafkaFetchBytes(1, 10*1024*1024),
+    source.KafkaCommitBatch(100),
+)
+```
+
+### Core options
+
+| Option | Purpose |
+| --- | --- |
+| `KafkaBrokers(...string)` | Required bootstrap brokers. |
+| `KafkaTopic(topic)` | Single topic. |
+| `KafkaTopics(...string)` | Multiple topics in consumer-group mode. |
+| `KafkaGroupID(id)` | Consumer group id and broker offset tracking. |
+| `KafkaStartFrom(offset)` | `OffsetEarliest` or `OffsetLatest`. |
+| `KafkaFetchBytes(min, max)` | Fetch request sizing. |
+| `KafkaCommitBatch(n)` | Commit offsets every N messages; `0` commits per message. |
+| `KafkaParallel()` | Per-partition readers; disables consumer-group auto-balancing. |
+
+### Authentication
+
+```go
+src := source.NewKafkaSource(
+    source.KafkaBrokers("localhost:9092"),
+    source.KafkaTopic("orders"),
+    source.KafkaSASL(auth.SASLConfig{
+        Mechanism: auth.SASLPlain,
+        Username: "user",
+        Password: "pass",
+    }),
+    source.KafkaTLS(auth.TLSConfig{
+        CAFile: "ca.pem",
+    }),
+)
+```
+
+### Deserialization
+
+```go
+src := source.NewKafkaSource(
+    source.KafkaBrokers("localhost:9092"),
+    source.KafkaTopic("orders"),
+    source.KafkaDeserialize(source.NewJSONDeserializer[Order]()),
+    source.KafkaDeserializeFailurePolicy(source.DeserFailureDLQ),
+    source.KafkaDeserializeDLQ(dlq),
+)
+```
+
+The deserialized value is stored in `Record.Parsed`. The raw bytes remain in
+`Record.Value`.
+
+### Watermarks
+
+```go
+src := source.NewKafkaSource(
+    source.KafkaBrokers("localhost:9092"),
+    source.KafkaTopic("orders"),
+    source.KafkaWithWatermarks(5*time.Second),
+    source.KafkaWatermarkInterval(500*time.Millisecond),
+)
+```
+
+`KafkaWithWatermarks` uses bounded out-of-orderness: watermark equals max event
+timestamp seen minus the configured lateness.
+
+### Exactly-once source mode
+
+```go
+src := source.NewKafkaSource(
+    source.KafkaBrokers("localhost:9092"),
+    source.KafkaTopic("orders"),
+    source.KafkaGroupID("orders-eo"),
+    source.KafkaExactlyOnce(),
+)
+```
+
+Exactly-once mode disables eager broker offset commits and uses
+`read_committed` isolation. Offsets are committed only after coordinated
+checkpoints complete.

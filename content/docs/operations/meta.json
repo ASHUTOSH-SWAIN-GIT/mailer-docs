@@ -1,0 +1,11 @@
+{
+  "title": "Operations",
+  "icon": "Settings",
+  "pages": [
+    "runtime",
+    "delivery-guarantees",
+    "kafka",
+    "postgres",
+    "metrics-dashboard"
+  ]
+}

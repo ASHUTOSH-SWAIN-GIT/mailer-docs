@@ -1,0 +1,46 @@
+---
+title: Workflow Schema
+description: Compact reference for workflow fields.
+icon: Braces
+---
+
+```yaml
+name: string
+version: string
+env:
+  bufferSize: number
+  shutdownTimeout: duration
+  checkpointing:
+    interval: duration
+    dir: string
+  state:
+    backend: memory | pebble
+    dir: string
+source:
+  type: generator | slice | kafka
+pipeline:
+  - id: string
+    type: filter | selectFields | renameFields | setFields | keyBy | reduce | window
+sink:
+  type: stdout | blackhole | kafka | txnKafka | postgres
+```
+
+## Field paths
+
+Declarative JSON operators use dot-separated paths:
+
+```text
+customer.id
+payment.total
+```
+
+## Filter operators
+
+Filters support equality, inequality, ordering, and string/list containment
+comparisons through the workflow operators package.
+
+## Validation
+
+Validation accumulates all problems and returns one error. It rejects unknown
+fields, unsupported types, invalid operator ordering, unsupported delivery
+guarantee combinations, unsafe Postgres identifiers, and invalid durations.

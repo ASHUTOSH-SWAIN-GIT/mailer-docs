@@ -1,13 +1,62 @@
 ---
-title: Hello World
-description: Your first document
+title: Mailer Documentation
+description: Build and run Go stream processing pipelines with the SDK or declarative workflows.
+icon: BookOpen
 ---
 
-Welcome to the docs! You can start writing documents in `/content/docs`.
+Mailer is a Go stream processing library for long-running pipelines. It reads
+records from sources, applies operators such as filter, keyBy, reduce, and
+window, then writes the result to sinks.
 
-## What is Next?
+You can build pipelines in two ways:
 
 <Cards>
-  <Card title="Learn more about Next.js" href="https://nextjs.org/docs" />
-  <Card title="Learn more about Fumadocs" href="https://fumadocs.dev" />
+  <Card title="Go SDK" href="/docs/sdk/overview">
+    Compose sources, operators, state, checkpointing, and sinks directly in Go.
+  </Card>
+  <Card title="Declarative workflows" href="/docs/workflows/overview">
+    Define common pipelines in YAML or JSON and run them with the workflow CLI.
+  </Card>
+  <Card title="Internals" href="/docs/internals/architecture">
+    Learn how stages, keyed workers, Pebble state, checkpoints, and windows work.
+  </Card>
+  <Card title="Operations" href="/docs/operations/runtime">
+    Run pipelines with durable state, Kafka, Postgres, metrics, and delivery guarantees.
+  </Card>
 </Cards>
+
+## Current scope
+
+- Local generator workflows can run without external services.
+- Kafka sources and sinks are supported for real streaming pipelines.
+- Transactional Kafka sinks validate exactly-once requirements.
+- Postgres sinks support inserts and upserts.
+- Memory and Pebble state backends are available.
+- Checkpointing can recover keyed and windowed state.
+- Secret placeholders use environment variables and are not printed in metadata.
+- The current workflow CLI reads local workflow files; remote workflow storage is future work.
+
+## Start here
+
+Run the local order totals workflow from the Mailer repository:
+
+```bash
+go run ./cmd/mailer-workflow --file examples/workflows/order-totals.yaml
+```
+
+Expected data output includes rolling customer totals:
+
+```text
+key=c1 value={"sum":10}
+key=c1 value={"sum":15}
+key=c2 value={"sum":7}
+```
+
+The exact timestamp and offset fields can vary by source.
+
+## Learn the system
+
+- Start with [Getting Started](/docs/getting-started).
+- Use [SDK Overview](/docs/sdk/overview) for Go usage.
+- Use [Workflow Format](/docs/workflows/format) for YAML.
+- Use [Pebble State Backend](/docs/internals/pebble) and [Windowing Internals](/docs/internals/windowing) for internal behavior.

@@ -1,0 +1,14 @@
+{
+  "title": "SDK",
+  "icon": "Code",
+  "pages": [
+    "overview",
+    "records",
+    "sources",
+    "operators",
+    "windows",
+    "sinks",
+    "state-checkpointing",
+    "errors-observability"
+  ]
+}
