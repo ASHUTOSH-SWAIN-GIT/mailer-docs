@@ -41,6 +41,12 @@ comparisons through the workflow operators package.
 
 ## Validation
 
-Validation accumulates all problems and returns one error. It rejects unknown
-fields, unsupported types, invalid operator ordering, unsupported delivery
-guarantee combinations, unsafe Postgres identifiers, and invalid durations.
+Invalid workflows are rejected in three layers, before anything runs:
+
+- **Parse** rejects unknown or misspelled fields (strict decoding) and
+  invalid duration strings.
+- **Validate** accumulates every remaining problem into one error:
+  unsupported types, missing or duplicate operator ids, invalid operator
+  ordering, and unsupported delivery-guarantee combinations.
+- **Compile** rejects unsafe Postgres table/column identifiers and
+  unresolved `${VAR}` references.

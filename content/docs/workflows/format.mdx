@@ -58,9 +58,9 @@ env:
 | `bufferSize` | `1024` | `WithBufferSize` |
 | `shutdownTimeout` | `30s` | `WithShutdownTimeout` |
 | `checkpointing.interval` | Off | `WithCheckpointing` |
-| `checkpointing.dir` | Required when checkpointing is configured | `checkpoint.NewFileStorage` |
+| `checkpointing.dir` | Optional — derived as `<data-dir>/<workflow-name>/checkpoints` when omitted | `checkpoint.NewFileStorage` |
 | `state.backend` | `memory` | `WithStateBackend` |
-| `state.dir` | Required for `pebble` | Pebble root directory |
+| `state.dir` | Optional — derived as `<data-dir>/<workflow-name>/state` when omitted | Pebble root directory |
 
 ## Source
 
