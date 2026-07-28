@@ -4,7 +4,7 @@ description: Running pipelines, state directories, graceful shutdown, and local-
 icon: Play
 ---
 
-Mailer runs inside one Go process. There is no job server or distributed cluster
+Weibo runs inside one Go process. There is no job server or distributed cluster
 runtime yet.
 
 ## Local execution
@@ -12,7 +12,7 @@ runtime yet.
 Today, workflow source files are local files:
 
 ```bash
-go run ./cmd/mailer-workflow --file examples/workflows/order-totals.yaml
+go run ./cmd/weibo-workflow --file examples/workflows/order-totals.yaml
 ```
 
 The CLI reads the workflow from disk, compiles it in-process, and executes it in
@@ -24,7 +24,7 @@ Use `--data-dir` or workflow `env` fields to control state and checkpoint
 locations.
 
 ```bash
-go run ./cmd/mailer-workflow \
+go run ./cmd/weibo-workflow \
   --file workflow.yaml \
   --data-dir ./data
 ```

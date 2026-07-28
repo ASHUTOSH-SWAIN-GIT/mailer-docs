@@ -23,11 +23,11 @@ const plexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL('http://localhost:3000'),
   title: {
-    default: 'Mailer — stream processing engine for Go',
-    template: '%s | Mailer',
+    default: 'Weibo — stream processing engine for Go',
+    template: '%s | Weibo',
   },
   description:
-    'Mailer is an embeddable stream processing engine for Go: keyed state, event-time windows, barrier checkpointing, durable Pebble state, and end-to-end exactly-once Kafka pipelines — one process, no cluster. Build with the Go SDK or declarative YAML workflows.',
+    'Weibo is an embeddable stream processing engine for Go: keyed state, event-time windows, barrier checkpointing, durable Pebble state, and end-to-end exactly-once Kafka pipelines — one process, no cluster. Build with the Go SDK or declarative YAML workflows.',
   icons: {
     icon: '/icon.svg',
   },

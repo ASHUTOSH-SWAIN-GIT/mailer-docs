@@ -1,7 +1,7 @@
 # mailer-docs
 
 Fumadocs documentation site for
-[Mailer](https://github.com/ASHUTOSH-SWAIN-GIT/mailer).
+[Weibo](https://github.com/ASHUTOSH-SWAIN-GIT/weibo).
 
 Run development server:
 

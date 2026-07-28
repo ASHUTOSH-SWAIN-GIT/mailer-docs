@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 /* Real output of:
-   go run ./cmd/mailer-workflow --file examples/workflows/order-totals.yaml --dry-run */
+   go run ./cmd/weibo-workflow --file examples/workflows/order-totals.yaml --dry-run */
 const terminalOutput = [
   ['workflow', 'order-totals'],
   ['delivery', 'at-most-once'],
@@ -53,7 +53,7 @@ const guarantees = [
 
 const tickerItems = ['source', 'filter', 'keyBy', 'window', 'reduce', 'sink'];
 
-const goSnippet = `env := mailer.NewEnv().
+const goSnippet = `env := weibo.NewEnv().
     WithCheckpointing(30*time.Second,
         checkpoint.NewFileStorage("./ckpt")).
     WithStateBackend(state.Pebble("./state"))
@@ -104,7 +104,7 @@ function SectionTag({ index, label, dark }: { index: string; label: string; dark
 
 export default function HomePage() {
   return (
-    <main className="mailer-manual-theme min-h-screen bg-[var(--mm-yellow)] text-[var(--mm-ink)]">
+    <main className="weibo-manual-theme min-h-screen bg-[var(--mm-yellow)] text-[var(--mm-ink)]">
       {/* ============================== HERO ============================== */}
       <section className="relative overflow-hidden border-b-2 border-[var(--mm-ink)]">
         <div className="mm-grid-bg absolute inset-0" aria-hidden />
@@ -117,7 +117,7 @@ export default function HomePage() {
           </div>
 
           <h1 className="mm-display mm-rise mm-rise-2 mt-4 w-full text-[clamp(4.5rem,15.5vw,11.5rem)] leading-[0.82] tracking-tight">
-            MAILER
+            WEIBO
           </h1>
 
           <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-start">
@@ -127,7 +127,7 @@ export default function HomePage() {
                 <span className="text-[var(--mm-alert)]"> One process.</span>
               </p>
               <p className="mm-rise mm-rise-4 mt-6 max-w-xl text-lg font-medium leading-7">
-                Mailer is an embeddable stream processing engine for Go —
+                Weibo is an embeddable stream processing engine for Go —
                 Flink-style semantics without the cluster. Build pipelines in
                 the Go SDK or declare them in YAML; both compile into the same
                 stage-based runtime with durable Pebble state and barrier
@@ -147,7 +147,7 @@ export default function HomePage() {
             <aside className="mm-rise mm-rise-4 mm-plate border-2 border-[var(--mm-ink)] bg-[var(--mm-ink)] text-[var(--mm-yellow)]">
               <div className="flex items-center justify-between border-b-2 border-[var(--mm-yellow)]/25 px-4 py-2.5">
                 <span className="mm-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--mm-yellow-soft)]">
-                  mailer-workflow · dry run
+                  weibo-workflow · dry run
                 </span>
                 <span className="flex gap-1.5" aria-hidden>
                   <i className="block h-2.5 w-2.5 border border-[var(--mm-yellow)]/60" />
@@ -158,7 +158,7 @@ export default function HomePage() {
               <div className="mm-mono px-4 py-4 text-[12.5px] leading-6 [overflow-wrap:anywhere] md:text-[13px]">
                 <p className="text-[var(--mm-yellow-soft)]">
                   <span className="text-[var(--mm-alert)]">$</span> go run
-                  ./cmd/mailer-workflow \
+                  ./cmd/weibo-workflow \
                 </p>
                 <p className="pl-4 text-[var(--mm-yellow-soft)]">
                   --file examples/workflows/order-totals.yaml --dry-run
@@ -386,7 +386,7 @@ export default function HomePage() {
               Start local. Point it at Kafka when the shape is right.
             </h2>
             <p className="mm-mono mt-6 text-xs uppercase tracking-[0.18em] text-[var(--mm-khaki)]">
-              go get github.com/ASHUTOSH-SWAIN-GIT/mailer
+              go get github.com/ASHUTOSH-SWAIN-GIT/weibo
             </p>
           </div>
           <div className="flex flex-wrap gap-3">

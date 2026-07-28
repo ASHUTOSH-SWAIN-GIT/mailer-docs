@@ -1,6 +1,6 @@
 ---
 title: SDK Overview
-description: The Go API for building Mailer pipelines.
+description: The Go API for building Weibo pipelines.
 icon: Code
 ---
 
@@ -9,7 +9,7 @@ The SDK is the primary API for custom pipelines. A program creates a
 `Stream`, attaches one sink, then calls `Execute`.
 
 ```go
-env := mailer.NewEnv()
+env := weibo.NewEnv()
 
 env.FromSource(src).
     Map(parse, "parse").

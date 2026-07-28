@@ -12,7 +12,7 @@ stream.KeyBy(func(r types.Record) []byte {
 }).WithPartitions(8)
 ```
 
-The selected key is both the routing key and the state key. Mailer writes it
+The selected key is both the routing key and the state key. Weibo writes it
 into `Record.Key` before stateful operators process the record.
 
 ## Reduce state

@@ -12,29 +12,29 @@ html > body[data-scroll-locked] {
 }
 
 /* ------------------------------------------------------------------ */
-/* Mailer field-manual theme: nav chrome overrides on the landing page */
+/* Weibo field-manual theme: nav chrome overrides on the landing page */
 /* ------------------------------------------------------------------ */
 
-body:has(.mailer-manual-theme) header,
-body:has(.mailer-manual-theme) nav {
+body:has(.weibo-manual-theme) header,
+body:has(.weibo-manual-theme) nav {
   background: #f4c700 !important;
   color: #080806 !important;
   border-color: #080806 !important;
 }
 
-body:has(.mailer-manual-theme) header a,
-body:has(.mailer-manual-theme) nav a,
-body:has(.mailer-manual-theme) header button,
-body:has(.mailer-manual-theme) nav button {
+body:has(.weibo-manual-theme) header a,
+body:has(.weibo-manual-theme) nav a,
+body:has(.weibo-manual-theme) header button,
+body:has(.weibo-manual-theme) nav button {
   color: #080806 !important;
 }
 
-body:has(.mailer-manual-theme) nav {
+body:has(.weibo-manual-theme) nav {
   min-height: 48px !important;
   border-bottom: 2px solid #080806 !important;
 }
 
-body:has(.mailer-manual-theme) nav button {
+body:has(.weibo-manual-theme) nav button {
   min-height: 34px !important;
   height: 34px !important;
   border-radius: 0 !important;
@@ -44,14 +44,14 @@ body:has(.mailer-manual-theme) nav button {
   font-weight: 800 !important;
 }
 
-body:has(.mailer-manual-theme) nav button:has(kbd),
-body:has(.mailer-manual-theme) nav button:has([data-key]) {
+body:has(.weibo-manual-theme) nav button:has(kbd),
+body:has(.weibo-manual-theme) nav button:has([data-key]) {
   width: clamp(180px, 24vw, 280px) !important;
   justify-content: flex-start !important;
   padding-inline: 14px !important;
 }
 
-body:has(.mailer-manual-theme) nav kbd {
+body:has(.weibo-manual-theme) nav kbd {
   height: 24px !important;
   min-width: 24px !important;
   border-radius: 0 !important;
@@ -62,7 +62,7 @@ body:has(.mailer-manual-theme) nav kbd {
   font-size: 12px !important;
 }
 
-body:has(.mailer-manual-theme) nav svg {
+body:has(.weibo-manual-theme) nav svg {
   width: 20px !important;
   height: 20px !important;
   stroke-width: 2.4 !important;
@@ -72,7 +72,7 @@ body:has(.mailer-manual-theme) nav svg {
 /* Field-manual design tokens + utilities (landing page only)          */
 /* ------------------------------------------------------------------ */
 
-.mailer-manual-theme {
+.weibo-manual-theme {
   --mm-yellow: #f4c700;
   --mm-yellow-soft: #fff0a3;
   --mm-ink: #080806;

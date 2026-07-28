@@ -1,13 +1,13 @@
 ---
 title: Getting Started
-description: Run Mailer locally with a declarative workflow or the Go SDK.
+description: Run Weibo locally with a declarative workflow or the Go SDK.
 icon: Rocket
 ---
 
 ## Prerequisites
 
 - Go installed.
-- A local checkout of `github.com/ASHUTOSH-SWAIN-GIT/mailer`.
+- A local checkout of `github.com/ASHUTOSH-SWAIN-GIT/weibo`.
 - Kafka and Postgres only for connector examples.
 
 ## Run a local workflow
@@ -16,10 +16,10 @@ The local examples use the generator source and stdout sink, so they do not need
 Kafka, Postgres, or environment variables.
 
 ```bash
-git clone https://github.com/ASHUTOSH-SWAIN-GIT/mailer.git
-cd mailer
+git clone https://github.com/ASHUTOSH-SWAIN-GIT/weibo.git
+cd weibo
 go test ./...
-go run ./cmd/mailer-workflow --file examples/workflows/order-totals.yaml
+go run ./cmd/weibo-workflow --file examples/workflows/order-totals.yaml
 ```
 
 The workflow filters completed orders, keys records by `customer.id`, and sums
@@ -44,7 +44,7 @@ Use dry-run mode to parse, validate, resolve secret placeholders, compile, and
 describe the pipeline without executing it.
 
 ```bash
-go run ./cmd/mailer-workflow --file examples/workflows/order-totals.yaml --dry-run --describe
+go run ./cmd/weibo-workflow --file examples/workflows/order-totals.yaml --dry-run --describe
 ```
 
 ## Go SDK
@@ -52,7 +52,7 @@ go run ./cmd/mailer-workflow --file examples/workflows/order-totals.yaml --dry-r
 Use the SDK when you need custom functions or direct Go control.
 
 ```go
-env := mailer.NewEnv()
+env := weibo.NewEnv()
 
 env.FromSource(source.NewGeneratorSource(records)).
     Filter(func(r types.Record) bool {

@@ -1,10 +1,10 @@
 ---
 title: Architecture
-description: Mailer's single-process stream processing architecture.
+description: Weibo's single-process stream processing architecture.
 icon: Network
 ---
 
-Mailer is a single-process, multi-goroutine stream processor. It is not a
+Weibo is a single-process, multi-goroutine stream processor. It is not a
 cluster runtime. You embed it in a Go process, build one pipeline, and call
 `Execute`.
 
@@ -20,7 +20,7 @@ Source -> Operators -> Sink
 
 | Package | Responsibility |
 | --- | --- |
-| `mailer` | `StreamExecutionEnv`, fluent builder, execution and checkpoint glue. |
+| `weibo` | `StreamExecutionEnv`, fluent builder, execution and checkpoint glue. |
 | `types` | `Record`, watermark, and barrier marker model. |
 | `source` | Kafka, generator, and slice sources. |
 | `operator` | Map, flatMap, filter, process, keyBy, reduce, window. |
@@ -42,7 +42,7 @@ Source -> Operators -> Sink
 
 ## Failure boundary
 
-Mailer can recover source offsets and operator state from checkpoints. Output
+Weibo can recover source offsets and operator state from checkpoints. Output
 guarantees depend on the sink:
 
 - Transactional Kafka can be exactly-once.

@@ -1,6 +1,6 @@
 ---
 title: Sources
-description: How records enter Mailer pipelines.
+description: How records enter Weibo pipelines.
 icon: DatabaseZap
 ---
 
@@ -14,7 +14,7 @@ Use generator source for local examples and tests.
 ```go
 records := []types.Record{
     types.NewRecord([]byte("a"), []byte(`{"word":"hello"}`)),
-    types.NewRecord([]byte("b"), []byte(`{"word":"mailer"}`)),
+    types.NewRecord([]byte("b"), []byte(`{"word":"weibo"}`)),
 }
 
 src := source.NewGeneratorSource(records)

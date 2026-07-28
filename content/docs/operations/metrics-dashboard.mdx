@@ -4,20 +4,20 @@ description: Prometheus metrics and dashboard metadata.
 icon: ChartNoAxesCombined
 ---
 
-Mailer records metrics during execution and exposes pipeline descriptions for a
+Weibo records metrics during execution and exposes pipeline descriptions for a
 dashboard.
 
 ## Stage and edge metrics
 
 | Metric | Meaning |
 | --- | --- |
-| `mailer_edge_queue_size` | Current queue depth for a bounded edge. |
-| `mailer_edge_queue_capacity` | Configured edge capacity. |
-| `mailer_stage_records_in_total` | Records entering each stage. |
-| `mailer_stage_records_out_total` | Records leaving each stage. |
-| `mailer_stage_send_block_seconds_total` | Time blocked by downstream backpressure. |
-| `mailer_stage_workers` | Worker count for stage. |
-| `mailer_stage_errors_total` | Stage errors. |
+| `weibo_edge_queue_size` | Current queue depth for a bounded edge. |
+| `weibo_edge_queue_capacity` | Configured edge capacity. |
+| `weibo_stage_records_in_total` | Records entering each stage. |
+| `weibo_stage_records_out_total` | Records leaving each stage. |
+| `weibo_stage_send_block_seconds_total` | Time blocked by downstream backpressure. |
+| `weibo_stage_workers` | Worker count for stage. |
+| `weibo_stage_errors_total` | Stage errors. |
 
 ## Operator labels
 

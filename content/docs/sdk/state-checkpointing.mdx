@@ -4,7 +4,7 @@ description: SDK configuration for state backends and checkpoint recovery.
 icon: Save
 ---
 
-State is internal to Mailer operators. User code does not currently access
+State is internal to Weibo operators. User code does not currently access
 `ValueState` or `ListState` directly. `Reduce` uses value state for
 accumulators; `Window` uses list state for buffered records and window metadata.
 
@@ -13,7 +13,7 @@ accumulators; `Window` uses list state for buffered records and window metadata.
 In-memory state is the default. It is fastest for small state and tests.
 
 ```go
-env := mailer.NewEnv()
+env := weibo.NewEnv()
 ```
 
 When checkpointing is enabled, in-memory state is serialized into checkpoint
@@ -24,8 +24,8 @@ data.
 Pebble state is disk-backed and is created per state owner.
 
 ```go
-env := mailer.NewEnv().
-    WithStateBackend(state.Pebble("/var/lib/mailer/state"))
+env := weibo.NewEnv().
+    WithStateBackend(state.Pebble("/var/lib/weibo/state"))
 ```
 
 Each top-level stateful operator or keyed-worker clone gets an isolated backend
@@ -34,10 +34,10 @@ directory. That isolation prevents key collisions between operators and workers.
 ## Checkpointing
 
 ```go
-env := mailer.NewEnv().
+env := weibo.NewEnv().
     WithCheckpointing(
         30*time.Second,
-        checkpoint.NewFileStorage("/var/lib/mailer/checkpoints"),
+        checkpoint.NewFileStorage("/var/lib/weibo/checkpoints"),
     )
 ```
 
@@ -52,7 +52,7 @@ restores stateful operator clones, then starts processing again.
 
 ## Native Pebble checkpoints
 
-Pebble implements `state.Checkpointable`. At a checkpoint barrier, Mailer asks
+Pebble implements `state.Checkpointable`. At a checkpoint barrier, Weibo asks
 the backend to checkpoint its on-disk database into the checkpoint directory.
 Pebble flushes recent writes, then creates a hard-link checkpoint. This keeps
 checkpoint metadata small and makes checkpoint cost scale with changed data

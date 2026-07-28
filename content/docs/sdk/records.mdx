@@ -1,6 +1,6 @@
 ---
 title: Records
-description: The data model that moves through every Mailer pipeline.
+description: The data model that moves through every Weibo pipeline.
 icon: Rows3
 ---
 
@@ -36,7 +36,7 @@ r = r.WithHeader("trace-id", []byte("abc"))
 
 ## Key
 
-`Key` is the state key used by `Reduce` and `Window`. After `KeyBy`, Mailer
+`Key` is the state key used by `Reduce` and `Window`. After `KeyBy`, Weibo
 writes the selected key back into `Record.Key` before keyed operators run.
 
 That means this pipeline aggregates by customer id, not by the original source

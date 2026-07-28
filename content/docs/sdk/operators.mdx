@@ -88,7 +88,7 @@ stream.KeyBy(func(r types.Record) []byte {
 }, "by-key").WithPartitions(8)
 ```
 
-Every record with the same selected key goes to the same keyed worker. Mailer
+Every record with the same selected key goes to the same keyed worker. Weibo
 also writes the selected key to `Record.Key` before downstream stateful
 operators run, so `Reduce` and `Window` use the selected key for state.
 

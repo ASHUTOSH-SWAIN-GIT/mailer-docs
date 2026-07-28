@@ -5,7 +5,7 @@ icon: Terminal
 ---
 
 ```bash
-go run ./cmd/mailer-workflow --file workflow.yaml [flags]
+go run ./cmd/weibo-workflow --file workflow.yaml [flags]
 ```
 
 | Flag | Required | Description |
@@ -19,7 +19,7 @@ go run ./cmd/mailer-workflow --file workflow.yaml [flags]
 Examples:
 
 ```bash
-go run ./cmd/mailer-workflow --file examples/workflows/wordcount.yaml
-go run ./cmd/mailer-workflow --file examples/workflows/order-totals.yaml --dry-run --describe
-go run ./cmd/mailer-workflow --file workflow.yaml --data-dir ./data
+go run ./cmd/weibo-workflow --file examples/workflows/wordcount.yaml
+go run ./cmd/weibo-workflow --file examples/workflows/order-totals.yaml --dry-run --describe
+go run ./cmd/weibo-workflow --file workflow.yaml --data-dir ./data
 ```

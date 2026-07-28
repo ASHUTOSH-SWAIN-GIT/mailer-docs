@@ -20,17 +20,32 @@ Use `topics` instead of `topic` for multi-topic consumer-group mode.
 
 ## Authentication
 
+Hosted clusters (Confluent Cloud, Aiven, MSK, Redpanda Cloud) use SASL over
+TLS. Add `sasl` and/or `tls` blocks to a Kafka **source**, **kafka** sink, or
+**txnKafka** sink:
+
 ```yaml
 sasl:
-  mechanism: plain
+  mechanism: plain          # plain | scram-sha-256 | scram-sha-512
   username: ${KAFKA_USERNAME}
   password: ${KAFKA_PASSWORD}
-tls:
-  caFile: ca.pem
-  insecureSkipVerify: false
+tls: {}                     # TLS on with system root CAs (public-CA clusters)
 ```
 
-Prefer secret placeholders for credentials.
+For a private CA or mutual TLS, set the file paths instead:
+
+```yaml
+tls:
+  caFile: ca.pem            # verify the broker against a private CA
+  certFile: client.pem      # client cert for mutual TLS
+  keyFile: client-key.pem
+  insecureSkipVerify: false # development only
+```
+
+Always use secret placeholders (`${VAR}`) for credentials — they resolve from
+the environment at compile time and never live in the file. On the
+`txnKafka` sink the same credentials are used by both the transactional
+producer and the recovery marker-probe consumer.
 
 ## Watermarks
 
@@ -66,10 +81,17 @@ Plain Kafka sinks are at-least-once when checkpointing is enabled.
 sink:
   type: txnKafka
   txnKafka:
-    brokers: [localhost:9092]
+    brokers: [pkc-xxxxx.us-east-1.aws.confluent.cloud:9092]
     topic: order-totals
     transactionalID: order-totals-pipeline
+    sasl:
+      mechanism: plain
+      username: ${KAFKA_API_KEY}
+      password: ${KAFKA_API_SECRET}
+    tls: {}
 ```
 
 Use a stable `transactionalID` per pipeline instance. A second process with the
-same id fences the first.
+same id fences the first. See [Authentication](#authentication) for SASL/TLS
+against hosted clusters — the transactional sink supports the same options as
+the source and the plain Kafka sink.

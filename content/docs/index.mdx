@@ -1,10 +1,10 @@
 ---
-title: Mailer Documentation
+title: Weibo Documentation
 description: Build and run Go stream processing pipelines with the SDK or declarative workflows.
 icon: BookOpen
 ---
 
-Mailer is a Go stream processing library for long-running pipelines. It reads
+Weibo is a Go stream processing library for long-running pipelines. It reads
 records from sources, applies operators such as filter, keyBy, reduce, and
 window, then writes the result to sinks.
 
@@ -38,10 +38,10 @@ You can build pipelines in two ways:
 
 ## Start here
 
-Run the local order totals workflow from the Mailer repository:
+Run the local order totals workflow from the Weibo repository:
 
 ```bash
-go run ./cmd/mailer-workflow --file examples/workflows/order-totals.yaml
+go run ./cmd/weibo-workflow --file examples/workflows/order-totals.yaml
 ```
 
 Expected data output includes rolling customer totals:

@@ -1,6 +1,6 @@
 ---
 title: Sinks
-description: How records leave Mailer pipelines.
+description: How records leave Weibo pipelines.
 icon: Send
 ---
 
@@ -65,6 +65,25 @@ out := sink.NewTxnKafkaSink(
     sink.TxnKafkaBrokers("localhost:9092"),
     sink.TxnKafkaTopic("order-totals"),
     sink.TxnKafkaTransactionalID("order-totals-pipeline"),
+)
+```
+
+For hosted clusters, add `TxnKafkaSASL` / `TxnKafkaTLS` — the same
+`auth.SASLConfig` / `auth.TLSConfig` used by the source and the plain Kafka
+sink. The credentials are used by both the transactional producer and the
+recovery marker-probe consumer.
+
+```go
+out := sink.NewTxnKafkaSink(
+    sink.TxnKafkaBrokers("pkc-xxxxx.confluent.cloud:9092"),
+    sink.TxnKafkaTopic("order-totals"),
+    sink.TxnKafkaTransactionalID("order-totals-pipeline"),
+    sink.TxnKafkaSASL(auth.SASLConfig{
+        Mechanism: auth.SASLPlain,
+        Username:  os.Getenv("KAFKA_API_KEY"),
+        Password:  os.Getenv("KAFKA_API_SECRET"),
+    }),
+    sink.TxnKafkaTLS(auth.TLSConfig{}), // TLS on, system CAs
 )
 ```
 

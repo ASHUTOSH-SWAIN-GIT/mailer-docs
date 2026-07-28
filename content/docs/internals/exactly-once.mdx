@@ -21,7 +21,7 @@ out := sink.NewTxnKafkaSink(
     sink.TxnKafkaTransactionalID("order-totals-pipeline"),
 )
 
-env := mailer.NewEnv().
+env := weibo.NewEnv().
     WithCheckpointing(30*time.Second, checkpoint.NewFileStorage("./checkpoints"))
 ```
 
@@ -51,7 +51,7 @@ The checkpoint file acts as the transaction log.
 
 The marker topic helps recovery resolve crashes around transaction commit and
 checkpoint completion. If recovery cannot determine whether a transaction
-committed, Mailer refuses to start rather than guessing and risking duplicates
+committed, Weibo refuses to start rather than guessing and risking duplicates
 or loss.
 
 ## Latency tradeoff
