@@ -1,378 +1,217 @@
 import Link from 'next/link';
 import {
-  Activity,
-  Boxes,
-  Braces,
+  ArrowRight,
   Check,
+  ChevronRight,
+  CircleDot,
   Clock3,
   Code2,
   Database,
   GitBranch,
   Layers3,
-  LockKeyhole,
-  Repeat2,
-  Route,
-  ServerCog,
-  ShieldCheck,
+  Menu,
+  Network,
+  Play,
+  RotateCcw,
   Terminal,
+  Workflow,
+  Zap,
 } from 'lucide-react';
 
-const stats = [
-  ['1 process', 'No cluster, no JVM'],
-  ['5M+', 'Keys checkpointed locally'],
-  ['<100ms', 'Measured restore path'],
+const stages = [
+  { name: 'Kafka source', detail: 'orders.v1', Icon: CircleDot },
+  { name: 'Key by', detail: 'customer_id', Icon: GitBranch },
+  { name: 'Reduce', detail: 'running_total', Icon: Workflow },
+  { name: 'Txn sink', detail: 'balances.v1', Icon: Database },
 ] as const;
 
-const useCases = [
-  ['Order totals', Activity, 'yellow'],
-  ['Fraud detection', ShieldCheck, 'orange'],
-  ['CDC fanout', GitBranch, 'pink'],
-  ['Session windows', Clock3, 'green'],
-  ['Metrics streams', Repeat2, 'cyan'],
-  ['Event enrichment', Layers3, 'red'],
-  ['Kafka pipelines', Route, 'purple'],
-  ['Local workflow runs', Terminal, 'tan'],
+const capabilities = [
+  ['01', 'State lives with your code', 'Embed the runtime in a Go process. No control plane, JVM, or separate cluster to babysit.', Code2],
+  ['02', 'Recovery is a protocol', 'Barriers align state, source offsets, and transactional output into one durable commit.', RotateCcw],
+  ['03', 'Backpressure is visible', 'Bounded edges expose blocked sends, capacity, throughput, and lag through metrics.', Network],
 ] as const;
 
-const sessions = [
-  ['Pebble-backed state', 'Durable local state with cheap hard-link checkpoints.', Database],
-  ['Exactly-once Kafka', 'Sink output, source offsets, and state commit together.', LockKeyhole],
-  ['Fast local runtime', 'Run pipelines inside one Go service during development.', ServerCog],
-  ['Reusable context', 'Workflow YAML and SDK code compile to the same planner.', Boxes],
-  ['1-line SDK path', 'Import Weibo, define the graph, execute in-process.', Code2],
-  ['Prometheus metrics', 'Inspect edge capacity, blocked sends, records, and lag.', Activity],
+const docs = [
+  ['Build a pipeline', 'Go SDK', '/docs/sdk/overview'],
+  ['Declare a workflow', 'YAML', '/docs/workflows/format'],
+  ['Reason about recovery', 'Internals', '/docs/internals/checkpointing'],
+  ['Operate Kafka safely', 'Operations', '/docs/operations/kafka'],
 ] as const;
 
-const snippets = {
-  Go: `env := weibo.NewEnv().
-  WithCheckpointing(30*time.Second, checkpoint.NewFileStorage("./ckpt")).
+const code = `env := weibo.NewEnv().
+  WithCheckpointing(30*time.Second, storage).
   WithStateBackend(state.Pebble("./state"))
 
 env.FromSource(orders).
   KeyBy(byCustomer).WithPartitions(4).
   Reduce(sumAmounts).
-  ToSink(sink.NewTxnKafkaSink(...))
+  ToSink(kafka.NewTransactionalSink(output))
 
-env.Execute(ctx)`,
-  YAML: `name: order-totals
-
-pipeline:
-  - id: completed
-    type: filter
-  - id: by-customer
-    type: keyBy
-  - id: totals
-    type: reduce
-
-sink:
-  type: stdout`,
-} as const;
-
-const examples = [
-  ['SDK overview', 'Build a pipeline in Go with sources, operators, and sinks.', '/docs/sdk/overview'],
-  ['Workflow format', 'Declare the same graph in YAML and run it through the CLI.', '/docs/workflows/format'],
-  ['Checkpointing', 'Understand barriers, storage, replay, and recovery paths.', '/docs/internals/checkpointing'],
-  ['Kafka operations', 'Wire Weibo into Kafka sources and transactional sinks.', '/docs/operations/kafka'],
-  ['Windowing', 'Use event-time windows and deterministic aggregations.', '/docs/internals/windowing'],
-  ['Examples', 'Start from complete pipelines instead of blank files.', '/docs/examples'],
-] as const;
-
-const guarantees = [
-  ['Launch', '$0', 'Start locally and run examples', ['Go SDK', 'YAML workflows', 'Local runner', 'Docs']],
-  [
-    'Scale',
-    'exactly-once',
-    'Use Weibo in production pipelines',
-    ['Kafka transactions', 'Pebble state', 'Checkpoint barriers', 'Metrics'],
-  ],
-  [
-    'Enterprise',
-    'custom',
-    'Fit the runtime into your system',
-    ['Custom connectors', 'Runtime internals', 'Operational docs', 'Crash semantics'],
-  ],
-] as const;
-
-function CodeBlock({ code }: { code: string }) {
-  return (
-    <div className="steel-code">
-      <div className="steel-lines" aria-hidden>
-        {Array.from({ length: 10 }, (_, i) => (
-          <span key={i}>{i + 1}</span>
-        ))}
-      </div>
-      <pre>
-        <code>{code}</code>
-      </pre>
-    </div>
-  );
-}
+env.Execute(ctx)`;
 
 export default function HomePage() {
   return (
-    <main className="weibo-steel min-h-screen bg-[#050505] text-white">
-      <div className="steel-bg" aria-hidden />
-
-      <div className="steel-page">
-        <div className="steel-announcement">
-          <span aria-hidden>●</span>
-          <Link href="/docs/getting-started">See what shipped in Weibo docs</Link>
+    <main className="weibo-dev">
+      <nav className="dev-nav" aria-label="Primary navigation">
+        <Link href="#top" className="dev-brand" aria-label="Weibo home">
+          <img src="/weibo-mark.png" alt="" />
+          <span>weibo</span>
+          <small>stream runtime</small>
+        </Link>
+        <div className="dev-nav-links">
+          <Link href="#runtime">Runtime</Link>
+          <Link href="#architecture">Architecture</Link>
+          <Link href="#docs">Docs</Link>
         </div>
+        <Link className="dev-github" href="https://github.com/ASHUTOSH-SWAIN-GIT/weibo">
+          <GitBranch size={17} />
+          <span>View source</span>
+        </Link>
+        <button className="dev-menu" type="button" aria-label="Open navigation">
+          <Menu size={20} />
+        </button>
+      </nav>
 
-        <div className="steel-nav">
-          <Link href="#hero" className="steel-brand" aria-label="Weibo home">
-            <img src="/weibo-mark.png" alt="" />
-          </Link>
-
-          <div className="steel-nav-links">
-            <Link href="#runtime">Runtime</Link>
-            <Link href="#stack">SDK</Link>
-            <Link href="#examples">Examples</Link>
-            <Link href="/docs">Docs</Link>
-          </div>
-
-          <Link href="https://github.com/ASHUTOSH-SWAIN-GIT/weibo" className="steel-github">
-            <GitBranch size={16} />
-            <span>GitHub</span>
-          </Link>
-
-          <Link href="/docs/getting-started" className="steel-dashboard">
-            Dashboard
-          </Link>
-        </div>
-
-        <section id="hero" className="steel-hero">
-          <div className="steel-hero-copy">
-            <h1>Stream Infrastructure for Go Services</h1>
-            <p>
-              Weibo is an embeddable stream processing engine with keyed state,
-              event-time windows, checkpointing, and Kafka delivery semantics.
-            </p>
-            <div className="steel-actions">
-              <Link href="/docs/getting-started" className="steel-primary">
-                Start Building
-              </Link>
-              <button type="button" className="steel-secondary">
-                Copy Install Command
-              </button>
-            </div>
-          </div>
-
-          <div className="steel-hero-art">
-            <div className="steel-cyan-field" aria-hidden />
-            <div className="steel-floating steel-floating-a">
-              <span>MY_APP</span>
-              <p>Aggregate completed orders by customer.</p>
-              <p>Checkpoint every 30 seconds.</p>
-              <p className="green">Pipeline compiled.</p>
-            </div>
-            <div className="steel-floating steel-floating-b">
-              <span>WEIBO_RUNTIME</span>
-              {['source', 'keyBy', 'reduce'].map((item) => (
-                <div key={item}>
-                  <p>{item}</p>
-                  <i />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="steel-stats">
-          {stats.map(([value, label]) => (
-            <div key={value}>
-              <h4>{value}</h4>
-              <p>{label}</p>
-            </div>
-          ))}
-        </section>
-
-        <section className="steel-section steel-use-cases">
-          <div className="steel-section-copy">
-            <p>Use Cases</p>
-            <h3>What Developers Build on Weibo</h3>
-            <span>
-              From local workflow runs to durable Kafka pipelines, Weibo keeps
-              stream processing close to your Go application.
-            </span>
-          </div>
-          <div className="steel-use-grid">
-            {useCases.map(([label, Icon, tone]) => (
-              <div key={label} className={`steel-use-tile tone-${tone}`}>
-                <Icon size={20} />
-                <p>{label}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section id="runtime" className="steel-section steel-sessions">
-          <div className="steel-section-copy">
-            <Boxes size={30} />
-            <h2>Runtime API</h2>
-            <p>Spin up local stream pipelines with the same primitives you ship.</p>
-            <Link href="/docs/internals/architecture" className="steel-primary">
-              Read Internals
-            </Link>
-          </div>
-          <div className="steel-session-grid">
-            {sessions.map(([title, body, Icon]) => (
-              <div key={title} className="steel-session-card">
-                <div className="steel-session-art">
-                  <Icon size={34} />
-                </div>
-                <h4>{title}</h4>
-                <p>{body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="steel-section steel-code-wide">
-          <div className="steel-code-card">
-            <div className="steel-panel-title">WEIBO_LOGIC</div>
-            <CodeBlock code={snippets.Go} />
-          </div>
-        </section>
-
-        <section id="stack" className="steel-section steel-stack">
-          <div className="steel-section-copy">
-            <h3>Get Started with Your Favorite Surface</h3>
-            <span>
-              Use the Go SDK when you need full control, or declarative YAML
-              when the pipeline shape should live in configuration.
-            </span>
-            <Link href="/docs" className="steel-doc-link">
-              Docs
-            </Link>
-          </div>
-
-          <div className="steel-stack-card">
-            <div className="steel-tabs">
-              <span>Go</span>
-              <span>YAML</span>
-              <span>CLI</span>
-              <span>Kafka</span>
-              <span>Prometheus</span>
-              <span className="muted">More Soon</span>
-            </div>
-            <CodeBlock code={snippets.YAML} />
-            <Link href="/docs/workflows/overview" className="steel-sdk-link">
-              view Workflow docs
-            </Link>
-          </div>
-        </section>
-
-        <section id="examples" className="steel-section steel-examples">
-          <div className="steel-section-copy">
-            <h3>Cookbook Examples</h3>
-            <span>Try Weibo with focused examples that map to real stream jobs.</span>
-            <Link href="/docs/examples" className="steel-doc-link">
-              View All Examples
-            </Link>
-          </div>
-          <div className="steel-example-grid">
-            {examples.map(([title, body, href]) => (
-              <Link href={href} key={title} className="steel-example-card">
-                <Braces size={20} />
-                <h4>{title}</h4>
-                <p>{body}</p>
-                <span>View</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="steel-section steel-pricing">
-          <div className="steel-section-copy">
-            <h3>Delivery Guarantees</h3>
-            <span>
-              Pick the semantics your pipeline needs, then wire the matching
-              source, checkpoint, and sink behavior.
-            </span>
-          </div>
-          <div className="steel-price-grid">
-            {guarantees.map(([name, price, body, items]) => (
-              <div key={name} className="steel-price-card">
-                <div>
-                  <p>{name}</p>
-                  <h3>{price}</h3>
-                  <span>{body}</span>
-                </div>
-                <ul>
-                  {items.map((item) => (
-                    <li key={item}>
-                      <Check size={15} />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <Link href="/docs/operations/delivery-guarantees">Get Started</Link>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="steel-repo">
-          <div>
-            <p>GitHub Repository</p>
-            <span>
-              Weibo is built for developers who want stream processing without a
-              separate cluster to operate.
-            </span>
-          </div>
-          <Link href="https://github.com/ASHUTOSH-SWAIN-GIT/weibo">
-            <GitBranch size={18} />
-            weibo
-          </Link>
-        </section>
-
-        <section className="steel-research">
-          <div>
-            <h2>Runtime</h2>
-            <h2>Docs</h2>
-          </div>
+      <section id="top" className="dev-hero">
+        <div className="dev-hero-copy">
+          <div className="dev-kicker"><span /> Open source · built in Go</div>
+          <h1>Streams that run<br />where your code runs.</h1>
           <p>
-            Read the internals when you need to reason about barriers, worker
-            routing, state backends, checkpoint storage, and recovery behavior.
+            Weibo is an embeddable stream processing engine for stateful pipelines,
+            event-time windows, and exactly-once Kafka delivery.
           </p>
-        </section>
-
-        <section className="steel-final">
-          <div>
-            <h1>Ready to</h1>
-            <h1>Build with Weibo?</h1>
-          </div>
-          <div>
-            <Link href="/docs/getting-started" className="steel-primary">
-              Start Building
+          <div className="dev-actions">
+            <Link href="/docs/getting-started" className="dev-button dev-button-primary">
+              Read the quickstart <ArrowRight size={17} />
             </Link>
-            <Link href="/docs" className="steel-secondary-link">
-              Documentation
-            </Link>
+            <code>go get github.com/ASHUTOSH-SWAIN-GIT/weibo</code>
           </div>
-        </section>
+        </div>
 
-        <footer className="steel-footer">
-          <div>
-            <img src="/weibo-mark.png" alt="" />
-            <p>A better way to run stateful streams in Go.</p>
-            <span>Weibo docs.</span>
+        <div className="dev-trace" aria-label="Example stream pipeline">
+          <div className="dev-trace-head">
+            <span><i /> pipeline / order-totals</span>
+            <span>RUNNING</span>
           </div>
-          <div>
-            <p>Platform</p>
-            <Link href="/docs">Docs</Link>
-            <Link href="/docs/examples">Examples</Link>
-            <Link href="/docs/reference/roadmap">Roadmap</Link>
+          <div className="dev-stage-list">
+            {stages.map(({ name, detail, Icon }, index) => (
+              <div className="dev-stage" key={name}>
+                <div className="dev-stage-index">0{index + 1}</div>
+                <div className="dev-stage-icon"><Icon size={20} /></div>
+                <div><strong>{name}</strong><span>{detail}</span></div>
+                <div className="dev-pulse"><i /><i /><i /></div>
+              </div>
+            ))}
           </div>
-          <div>
-            <p>Project</p>
-            <Link href="https://github.com/ASHUTOSH-SWAIN-GIT/weibo">GitHub</Link>
-            <Link href="/docs/internals/architecture">Architecture</Link>
-            <Link href="/docs/operations/runtime">Operations</Link>
+          <div className="dev-trace-foot">
+            <span><Clock3 size={14} /> checkpoint 184 committed</span>
+            <span>8,421 rec/s</span>
           </div>
-        </footer>
-      </div>
+        </div>
+
+        <div className="dev-hero-meta">
+          <span>NO CLUSTER</span><span>PEBBLE STATE</span><span>BOUNDED EDGES</span><span>KAFKA TRANSACTIONS</span>
+        </div>
+      </section>
+
+      <section id="runtime" className="dev-manifesto">
+        <div className="dev-section-label">Runtime model <span>01</span></div>
+        <div className="dev-manifesto-copy">
+          <h2>Your application is the platform.</h2>
+          <p>
+            Keep stream logic, deployment, and observability in the same place as
+            the service that owns them. Weibo gives Go applications durable state
+            without introducing another distributed system.
+          </p>
+        </div>
+        <div className="dev-capabilities">
+          {capabilities.map(([number, title, body, Icon]) => (
+            <article key={number}>
+              <div className="dev-cap-top"><span>{number}</span><Icon size={22} /></div>
+              <h3>{title}</h3>
+              <p>{body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="architecture" className="dev-architecture">
+        <div className="dev-section-label">Authoring model <span>02</span></div>
+        <div className="dev-code-copy">
+          <div>
+            <span className="dev-eyebrow">One graph. One process.</span>
+            <h2>Describe the flow.<br />Weibo handles the machinery.</h2>
+          </div>
+          <p>Sources, keyed operators, state, and sinks compile into a bounded execution graph with deterministic recovery.</p>
+        </div>
+        <div className="dev-code-window">
+          <div className="dev-code-rail">
+            <span className="active"><Code2 size={17} /> pipeline.go</span>
+            <span><Terminal size={17} /> output</span>
+            <span><Layers3 size={17} /> graph</span>
+          </div>
+          <div className="dev-code-main">
+            <div className="dev-code-title"><span>pipeline.go</span><small>Go</small></div>
+            <pre><code>{code}</code></pre>
+          </div>
+          <aside className="dev-runtime-log">
+            <div><span>RUNTIME</span><i>LIVE</i></div>
+            <p><b>14:32:08</b> graph compiled</p>
+            <p><b>14:32:08</b> restored checkpoint 183</p>
+            <p><b>14:32:09</b> partitions assigned [0..3]</p>
+            <p className="ok"><b>14:32:39</b> checkpoint 184 committed</p>
+            <div className="dev-log-metric"><small>records</small><strong>4.8M</strong></div>
+            <div className="dev-log-metric"><small>p99 latency</small><strong>38ms</strong></div>
+          </aside>
+        </div>
+      </section>
+
+      <section className="dev-contract">
+        <div className="dev-section-label">Delivery contract <span>03</span></div>
+        <div className="dev-contract-grid">
+          <div className="dev-contract-title">
+            <Zap size={28} />
+            <h2>Crash anywhere.<br />Resume precisely.</h2>
+          </div>
+          <div className="dev-checks">
+            {['Source offsets captured', 'Operator state persisted', 'Sink transaction committed', 'Graph restored deterministically'].map((item) => (
+              <div key={item}><Check size={16} /><span>{item}</span></div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="docs" className="dev-docs">
+        <div className="dev-section-label">Start building <span>04</span></div>
+        <div className="dev-docs-head">
+          <h2>Pick your entry point.</h2>
+          <Link href="/docs">Browse all documentation <ArrowRight size={16} /></Link>
+        </div>
+        <div className="dev-doc-list">
+          {docs.map(([title, type, href], index) => (
+            <Link href={href} key={title}>
+              <span>0{index + 1}</span>
+              <strong>{title}</strong>
+              <small>{type}</small>
+              <ChevronRight size={20} />
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="dev-final">
+        <img src="/weibo-mark.png" alt="" />
+        <div>
+          <span>Stateful stream processing for Go</span>
+          <h2>Ship the pipeline<br />with the product.</h2>
+        </div>
+        <Link href="/docs/getting-started" className="dev-final-link"><Play size={18} fill="currentColor" /> Start with Weibo</Link>
+      </section>
+
+      <footer className="dev-footer">
+        <span>Weibo · open source stream runtime</span>
+        <div><Link href="/docs">Documentation</Link><Link href="https://github.com/ASHUTOSH-SWAIN-GIT/weibo">GitHub</Link></div>
+      </footer>
     </main>
   );
 }
