@@ -29,7 +29,9 @@ export const metadata: Metadata = {
   description:
     'Weibo is an embeddable stream processing engine for Go: keyed state, event-time windows, barrier checkpointing, durable Pebble state, and end-to-end exactly-once Kafka pipelines — one process, no cluster. Build with the Go SDK or declarative YAML workflows.',
   icons: {
-    icon: '/icon.svg',
+    icon: '/icon.png',
+    shortcut: '/icon.png',
+    apple: '/icon.png',
   },
 };
 
