@@ -6,6 +6,7 @@
     "delivery-guarantees",
     "kafka",
     "postgres",
-    "metrics-dashboard"
+    "metrics-dashboard",
+    "deployment"
   ]
 }
