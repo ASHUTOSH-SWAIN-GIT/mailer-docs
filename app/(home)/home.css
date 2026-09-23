@@ -9,7 +9,7 @@ body:has(.vx) #nd-nav { display: none !important; }
   --text: #ededed;
   --muted: #a1a1a1;
   --faint: #6b6b6b;
-  --signal: #3ee6a8;
+  --signal: #ffb454;
   --mono: var(--font-geist-mono), ui-monospace, monospace;
   min-height: 100vh;
   overflow-x: hidden;
@@ -117,7 +117,7 @@ body:has(.vx) #nd-nav { display: none !important; }
 .vx-badge span {
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgb(62 230 168 / 0.12);
+  background: rgb(255 180 84 / 0.14);
   color: var(--signal);
   font-size: 12px;
   font-weight: 500;
@@ -129,7 +129,10 @@ body:has(.vx) #nd-nav { display: none !important; }
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.055em;
-  background: linear-gradient(180deg, #fff 30%, #9a9a9a);
+  color: #fff;
+}
+.vx-hero-accent {
+  background: linear-gradient(100deg, var(--signal) 0%, #ffd9a0 55%, var(--signal) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -204,7 +207,7 @@ body:has(.vx) #nd-nav { display: none !important; }
   z-index: 3;
   width: 1px;
   background: linear-gradient(180deg, transparent, var(--signal) 20%, var(--signal) 80%, transparent);
-  box-shadow: 0 0 12px rgb(62 230 168 / 0.6);
+  box-shadow: 0 0 12px rgb(255 180 84 / 0.55);
   opacity: 0;
   animation: vx-barrier 7s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }

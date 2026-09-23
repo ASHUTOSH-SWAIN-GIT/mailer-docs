@@ -66,7 +66,7 @@ export default function HomePage() {
         <h1>
           Stateful streams,
           <br />
-          embedded in Go.
+          <span className="vx-hero-accent">embedded in Go.</span>
         </h1>
         <p className="vx-lede">
           Weibo is a stream processing engine you import, not a cluster you run.
