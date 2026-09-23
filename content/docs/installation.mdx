@@ -1,0 +1,78 @@
+---
+title: Installation
+description: Requirements and how to install the library, the CLI, and the runner image.
+icon: Download
+---
+
+Weibo ships as three pieces. Most users only need the first.
+
+| Piece | What it is | Needed for |
+| --- | --- | --- |
+| Go library | `github.com/ASHUTOSH-SWAIN-GIT/weibo` | Every pipeline |
+| `weibo` CLI | Control plane server + job management | Dashboard, `weibo deploy` |
+| `weibo-runner` image | Generic container that runs YAML workflows | Deploying workflows as jobs |
+
+## Requirements
+
+- **Go 1.26+**
+- **Docker** only for the control plane and container jobs
+- **Kafka / Postgres** only for pipelines that use those connectors
+
+## Library
+
+```bash
+go get github.com/ASHUTOSH-SWAIN-GIT/weibo
+```
+
+```go
+import (
+    "github.com/ASHUTOSH-SWAIN-GIT/weibo"
+    "github.com/ASHUTOSH-SWAIN-GIT/weibo/sink"
+    "github.com/ASHUTOSH-SWAIN-GIT/weibo/source"
+    "github.com/ASHUTOSH-SWAIN-GIT/weibo/types"
+)
+```
+
+Pure Go, no CGO. Cross-compiles like any other Go module.
+
+## CLI
+
+The control plane lives in its own module:
+
+```bash
+go install github.com/ASHUTOSH-SWAIN-GIT/weibo/control/cmd/weibo@latest
+weibo help
+```
+
+Or run it from a checkout without installing:
+
+```bash
+git clone https://github.com/ASHUTOSH-SWAIN-GIT/weibo.git
+cd weibo/control && go run ./cmd/weibo dashboard
+```
+
+## Workflow runner (local)
+
+Run a YAML workflow directly, no container needed:
+
+```bash
+go run ./cmd/weibo-workflow --file examples/workflows/wordcount.yaml
+```
+
+## Runner image
+
+```bash
+docker build -f Dockerfile.runner -t weibo-runner:dev .
+```
+
+Distroless, non-root, static binary. Push it to a registry when the controller
+runs on another host. See [Deployment](/docs/operations/deployment).
+
+## Verify
+
+```bash
+go run ./examples/wordcount     # library works, no external services
+weibo help                      # CLI is on PATH
+```
+
+Next: [Getting Started](/docs/getting-started).

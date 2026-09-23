@@ -1,33 +1,26 @@
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import './global.css';
-import { Archivo, Archivo_Black, IBM_Plex_Mono } from 'next/font/google';
+import { Geist, Geist_Mono } from 'next/font/google';
 import type { Metadata } from 'next';
 
-const archivo = Archivo({
+const geistSans = Geist({
   subsets: ['latin'],
-  variable: '--font-archivo',
+  variable: '--font-geist-sans',
 });
 
-const archivoBlack = Archivo_Black({
+const geistMono = Geist_Mono({
   subsets: ['latin'],
-  weight: '400',
-  variable: '--font-archivo-black',
-});
-
-const plexMono = IBM_Plex_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--font-plex-mono',
+  variable: '--font-geist-mono',
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('http://localhost:3000'),
+  metadataBase: new URL('https://mailer.lowkeydev.me'),
   title: {
-    default: 'Weibo — stream processing engine for Go',
-    template: '%s | Weibo',
+    default: 'Weibo Docs · Stream processing engine for Go',
+    template: '%s · Weibo Docs',
   },
   description:
-    'Weibo is an embeddable stream processing engine for Go: keyed state, event-time windows, barrier checkpointing, durable Pebble state, and end-to-end exactly-once Kafka pipelines — one process, no cluster. Build with the Go SDK or declarative YAML workflows.',
+    'Weibo is an embeddable stream processing engine for Go: keyed state, event-time windows, barrier checkpointing, durable Pebble state, and exactly-once Kafka pipelines. One process, no cluster.',
   icons: {
     icon: '/icon.png',
     shortcut: '/icon.png',
@@ -39,7 +32,7 @@ export default function Layout({ children }: LayoutProps<'/'>) {
   return (
     <html
       lang="en"
-      className={`${archivo.className} ${archivo.variable} ${archivoBlack.variable} ${plexMono.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
       <body className="flex flex-col min-h-screen">

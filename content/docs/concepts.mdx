@@ -1,0 +1,91 @@
+---
+title: Core Concepts
+description: The vocabulary used across Weibo, in one page.
+icon: Boxes
+---
+
+```text
+Source[Kafka] → Map → Filter → KeyBy → Window(5m) → Reduce → Sink[Postgres]
+```
+
+## Stream
+
+An unbounded, ordered sequence of records. Created from a source, flows through
+operators, ends in a sink.
+
+## Record
+
+| Field | Type | Purpose |
+| --- | --- | --- |
+| `Key` | `[]byte` | Partition key for keyed state and shuffling |
+| `Value` | `[]byte` | Payload |
+| `Timestamp` | `time.Time` | Event time for windows |
+| `Offset` | `int64` | Source position for replay |
+| `Partition` | `int` | Source partition for barrier-aligned offsets |
+| `Source` | `string` | Stable source identity (Kafka topic) |
+| `Headers` | `map[string][]byte` | Optional metadata |
+
+## Source and sink
+
+- **Sources:** Kafka, generator, slice, file
+- **Sinks:** Kafka, transactional Kafka, Postgres, HTTP, S3, file, stdout, blackhole
+
+Details: [Sources](/docs/sdk/sources), [Sinks](/docs/sdk/sinks).
+
+## Operator
+
+| Operator | Shape | Use |
+| --- | --- | --- |
+| `Map` | 1 → 1 | Transform |
+| `FlatMap` | 1 → n | Split / explode |
+| `Filter` | 1 → 0/1 | Drop records |
+| `KeyBy` | partition | Enable keyed state + parallelism |
+| `Reduce` | fold per key | Running aggregates |
+| `Window` / `WindowReduce` | group by time | Bounded aggregates |
+| `Process` | 1 → 1, error-aware | Failure policy: drop, DLQ, fail |
+
+## Keyed stream
+
+After `KeyBy`, every key has its own isolated state. `WithPartitions(n)` runs
+`n` workers, each owning a slice of the key space.
+
+```go
+stream.KeyBy(byCustomer).WithPartitions(8).Reduce(sumAmount)
+```
+
+## Window and watermark
+
+- **Tumbling:** fixed, non-overlapping
+- **Sliding:** fixed, overlapping
+- **Session:** closes after an inactivity gap
+
+A **watermark** says "no record older than T will arrive". Windows fire when
+the watermark passes their end. Records behind the watermark (minus allowed
+lateness) are late and dropped or side-output.
+
+Prefer `WindowReduce` for one result per (key, window).
+
+## State
+
+| Backend | Storage | Best for |
+| --- | --- | --- |
+| `state.InMemory()` | RAM | Under ~100k keys, lowest latency |
+| `state.Pebble(dir)` | Disk (LSM) | Large state, fast native checkpoints |
+
+At 5M keys Pebble uses ~0.7 MB heap vs 579 MB, and checkpoints in ~75 ms vs ~3.3 s.
+
+## Checkpoint
+
+A consistent snapshot of source offsets plus all operator state, taken with
+barriers that flow in-band through the graph (Chandy-Lamport). On crash, Weibo
+restores the last completed checkpoint and replays from the saved offsets.
+
+## Savepoint
+
+A named, manually triggered checkpoint used for upgrades and migrations. See
+[Savepoints and Upgrades](/docs/operations/savepoints).
+
+## Job
+
+A complete pipeline (source → operators → sink) run by the process that
+embeds it, or as a container managed by the [control plane](/docs/operations/dashboard).

@@ -1,0 +1,73 @@
+---
+title: Troubleshooting and FAQ
+description: Common problems and quick answers.
+icon: LifeBuoy
+---
+
+## Troubleshooting
+
+### Windows never fire
+
+- Kafka sources need a `watermark` block. Without it, event time never advances.
+- A generator/slice source fires remaining windows only when it completes.
+- Check event timestamps are set; zero timestamps land in the epoch window.
+
+### Consumers see duplicates with `TxnKafkaSink`
+
+Consumers of the output topic must set `isolation.level=read_committed`.
+Otherwise they read aborted transactions.
+
+### Output appears in bursts
+
+Expected with exactly-once. Output becomes visible when the checkpoint
+interval's transaction commits. Lower the checkpoint interval for lower latency.
+
+### Pipeline is slow and memory is flat
+
+That's backpressure working. Look at `weibo_stage_send_block_seconds_total`
+and `weibo_edge_queue_size` to find the slow stage, then raise
+`WithParallelism` / `WithPartitions` or speed up the sink.
+
+### Startup fails with an ambiguous checkpoint error
+
+Weibo refuses to guess when restoring legacy multi-topic offsets. Restore from
+a newer checkpoint or savepoint, or start fresh with a new data dir.
+
+### State lost after renaming an operator
+
+State is keyed by operator label / workflow id. Keep them stable across
+upgrades. See [Savepoints and Upgrades](/docs/operations/savepoints).
+
+### `weibo deploy` build fails on `replace ../weibo`
+
+Local `replace` paths don't resolve inside a Docker build context. Depend on a
+tagged version, or build the binary on the host and use `-no-build -no-push`.
+
+### Controller refuses to start on `:9000`
+
+Public binds need auth. Set `WEIBO_AUTH_TOKEN`, bind `127.0.0.1:9000`, or pass
+`-allow-open-public` if a TLS proxy handles auth.
+
+### Dashboard shows "metrics not reported"
+
+The job agent isn't reachable: the job is stopped, still starting, or (on
+Kubernetes) the controller runs outside the cluster. Run it in-cluster or
+port-forward.
+
+## FAQ
+
+**Is Weibo distributed?** No. One process per job. Scale by running more
+instances in the same Kafka consumer group.
+
+**Do I need the control plane?** No. It's optional tooling for running jobs as
+containers. A pipeline is just a Go program.
+
+**Which sinks are exactly-once?** `TxnKafkaSink`. Others are at-least-once with
+checkpointing on, so make writes idempotent (e.g. Postgres upsert).
+
+**In-memory or Pebble state?** In-memory under ~100k keys. Pebble for large or
+long-lived state.
+
+**Does it support SQL or joins?** Not yet. Joins are next on the roadmap.
+
+**What license?** MIT.
