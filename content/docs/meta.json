@@ -1,13 +1,22 @@
 {
   "title": "Weibo",
   "pages": [
+    "---Get Started---",
     "index",
+    "installation",
     "getting-started",
+    "concepts",
+    "why-weibo",
     "examples",
+    "---Guides---",
     "sdk",
     "workflows",
-    "internals",
     "operations",
-    "reference"
+    "---Deep Dive---",
+    "internals",
+    "reference",
+    "---Help---",
+    "troubleshooting",
+    "contributing"
   ]
 }

@@ -1,0 +1,57 @@
+---
+title: Savepoints and Upgrades
+description: Stop, upgrade, and resume jobs without losing state.
+icon: Save
+---
+
+A **checkpoint** is automatic and exists for crash recovery. A **savepoint** is
+a named checkpoint you take on purpose, usually before an upgrade.
+
+## Upgrade a job
+
+```bash
+weibo savepoint <id> -label before-v2   # drain, snapshot, stop
+# deploy the new image or workflow
+weibo restart <id> -savepoint before-v2 # resume from that state
+```
+
+Without `-savepoint`, `restart` resumes from the last completed checkpoint.
+
+## Keep state compatible
+
+- Keep operator **labels / workflow ids stable**. State is keyed by owner id;
+  renaming an operator orphans its state.
+- Keep the **key function** the same. A different key means a different state slot.
+- Changing **partitions** is safe only if you accept a reshuffle of key ownership.
+- Keep `transactionalID` stable for `TxnKafkaSink`.
+
+## Where savepoints live
+
+| Backend | Location | Portable across jobs |
+| --- | --- | --- |
+| Docker | Shared local volume | Same host only |
+| Kubernetes | Job PVC | Same job only |
+| S3-compatible | `SAVEPOINT_S3_BUCKET` | Yes |
+
+S3 objects carry SHA-256 metadata and can use server-side encryption.
+
+## Compatibility guarantees
+
+- Completed checkpoints and savepoints from supported older formats keep loading.
+- Schema changes are versioned.
+- Prepared (in-flight transactional) checkpoints are never garbage-collected
+  until resolved.
+- Ambiguous or unknown state stops startup with a clear error. Weibo never
+  silently skips data or duplicates committed output.
+
+## Checkpoint file
+
+Each checkpoint stores `id`, `timestamp`, `operators` (inline state),
+`source` (offsets), `stateDirs` (Pebble hard-links), `status`
+(`completed` or `prepared`), and `txnId`.
+
+Source offsets are versioned:
+
+```json
+{ "version": 2, "positions": [{ "source": "orders", "partition": 0, "offset": 42 }] }
+```

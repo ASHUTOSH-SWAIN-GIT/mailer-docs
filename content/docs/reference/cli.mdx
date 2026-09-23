@@ -1,25 +1,71 @@
 ---
 title: CLI Reference
-description: Workflow runner command reference.
+description: The weibo control-plane CLI and the weibo-workflow runner.
 icon: Terminal
 ---
+
+## weibo
+
+```bash
+weibo <command> [flags]
+```
+
+Every command except `dashboard` talks to the controller over REST and reads
+`WEIBO_CONTROLLER` and `WEIBO_TOKEN` (or `-controller` / `-token`).
+
+| Command | Purpose | Key flags |
+| --- | --- | --- |
+| `dashboard` | Start controller + UI | see below |
+| `deploy` | Build, push, submit a manifest | `-file`, `-registry`, `-dockerfile`, `-context`, `-no-build`, `-no-push` |
+| `jobs` | List jobs | |
+| `status <id>` | Job detail, latest run, history | |
+| `runs <id>` | All run attempts | |
+| `logs <id>` | Container logs | `-tail 200`, `-follow` |
+| `cancel <id>` | Graceful stop | |
+| `restart <id>` | Resume | `-savepoint <label>` |
+| `savepoint <id>` | Stop with a named savepoint | `-label` (required) |
+| `delete <id>` | Remove the job | `-delete-data` |
+
+### weibo dashboard flags
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `-addr` | `:9000` | API + UI listen address |
+| `-image` | `weibo-runner:dev` | Runner image for YAML jobs |
+| `-db` | `./weibo-control.db` | SQLite path |
+| `-backend` | `docker` | `docker` or `kubernetes` |
+| `-auth-token` | `$WEIBO_AUTH_TOKEN` | Shared bearer token |
+| `-auth-token-sha256` | `$WEIBO_AUTH_TOKEN_SHA256` | Hashed tokens, `readonly:` / `readwrite:` prefixes |
+| `-allow-open-public` | `false` | Allow public bind without auth |
+| `-no-open` | `false` | Don't open a browser |
+| `-reconcile` | `3s` | Reconcile interval |
+| `-max-jobs` | `0` | Concurrent job cap (0 = resource-limited) |
+| `-default-job-cpu` / `-default-job-memory` | `1` / `1Gi` | Capacity math defaults |
+| `-grafana-url` | `$WEIBO_GRAFANA_URL` | Grafana deep links |
+| `-log-level` / `-log-format` | `info` / `text` | Logging |
+| `-otel-endpoint` | `$OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP traces |
+
+Kubernetes only: `-namespace`, `-kubeconfig`, `-pvc-size`, `-storage-class`,
+`-image-pull-secrets`, `-job-service-account`, `-job-runtime-class`,
+`-job-priority-class`, `-job-node-selector`, `-job-tolerations`,
+`-job-ttl-after-finished`.
+
+## weibo-workflow
+
+Runs a YAML/JSON workflow in the current process.
 
 ```bash
 go run ./cmd/weibo-workflow --file workflow.yaml [flags]
 ```
 
-| Flag | Required | Description |
-| --- | --- | --- |
-| `--file` | Yes | YAML or JSON workflow path. |
-| `--data-dir` | No | Base data directory for derived runtime paths. |
-| `--dry-run` | No | Compile only; do not execute. |
-| `--describe` | No | Print compiled pipeline description. |
-| `--quiet` | No | Suppress summary output. |
-
-Examples:
+| Flag | Description |
+| --- | --- |
+| `--file` | Workflow path (required) |
+| `--data-dir` | Base directory for state and checkpoints |
+| `--dry-run` | Compile only |
+| `--describe` | Print the compiled pipeline |
+| `--quiet` | Suppress summary output |
 
 ```bash
-go run ./cmd/weibo-workflow --file examples/workflows/wordcount.yaml
 go run ./cmd/weibo-workflow --file examples/workflows/order-totals.yaml --dry-run --describe
-go run ./cmd/weibo-workflow --file workflow.yaml --data-dir ./data
 ```

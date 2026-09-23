@@ -3,6 +3,9 @@
   "icon": "Settings",
   "pages": [
     "runtime",
+    "deployment",
+    "dashboard",
+    "savepoints",
     "delivery-guarantees",
     "kafka",
     "postgres",

@@ -1,0 +1,51 @@
+---
+title: Contributing
+description: Build, test, and send changes to Weibo.
+icon: GitPullRequest
+---
+
+## Setup
+
+```bash
+git clone https://github.com/ASHUTOSH-SWAIN-GIT/weibo.git
+cd weibo
+make build
+```
+
+The repo has three Go modules: root (engine), `control/` (control plane), and
+`telemetry/`. `make` targets cover all three.
+
+## Common targets
+
+| Target | What it does |
+| --- | --- |
+| `make test` | Unit tests for all modules |
+| `make test-race` | Tests with the race detector |
+| `make ci` | Everything hosted CI runs |
+| `make fmt` / `make fmt-check` | Format / verify formatting |
+| `make vet` | `go vet` all modules |
+| `make test-integration` | Offline integration tiers |
+| `make kafka-test` | Kafka end-to-end (needs a broker) |
+| `make fuzz-smoke` | Run fuzz targets briefly |
+| `make vuln` | `govulncheck` |
+| `make coverage-html` | HTML coverage report |
+| `make prod-like-up` | Local Kafka, Postgres, MinIO, Prometheus, Grafana |
+| `make dashboard-demo` | Dashboard with a live demo job |
+
+`make help` lists all of them.
+
+## Before a PR
+
+- `make ci` passes
+- New behaviour has tests, including recovery paths for stateful code
+- Checkpoint format changes are versioned
+- Docs updated if user-facing behaviour changed
+
+## Where things live
+
+See [Package Map](/docs/reference/package-map) and the in-repo
+[`ARCHITECTURE.md`](https://github.com/ASHUTOSH-SWAIN-GIT/weibo/blob/main/ARCHITECTURE.md).
+
+## License
+
+MIT.

@@ -1,0 +1,62 @@
+---
+title: REST API
+description: Control-plane HTTP endpoints.
+icon: Network
+---
+
+Base URL is the controller address (default `http://localhost:9000`). Send
+`Authorization: Bearer <token>` when auth is enabled.
+
+## Jobs
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/jobs` | List jobs |
+| `POST` | `/jobs` | Submit a job manifest |
+| `GET` | `/jobs/{id}` | Job, latest run, transitions |
+| `DELETE` | `/jobs/{id}` | Delete a job |
+| `POST` | `/jobs/{id}/cancel` | Graceful stop |
+| `POST` | `/jobs/{id}/restart` | Resume, optionally from a savepoint |
+| `POST` | `/jobs/{id}/savepoint` | Stop with a named savepoint |
+| `POST` | `/validate` | Validate a manifest without submitting |
+
+## Runs and logs
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/jobs/{id}/runs` | All attempts |
+| `GET` | `/jobs/{id}/runs/{runId}` | One attempt |
+| `GET` | `/jobs/{id}/runs/{runId}/logs?tail=N` | Logs of a past attempt |
+| `GET` | `/jobs/{id}/logs?tail=N` | Latest logs |
+| `GET` | `/jobs/{id}/logs/stream?tail=N` | Live logs (SSE) |
+| `GET` | `/jobs/{id}/transitions` | Lifecycle audit trail |
+
+## Live job data
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/jobs/{id}/state` | Phase, records in/out, checkpoints, last error |
+| `GET` | `/jobs/{id}/describe` | Source, sink, operators (secrets redacted) |
+| `GET` | `/jobs/{id}/plan` | Runtime stages and edges |
+| `GET` | `/jobs/{id}/metrics` | Prometheus text from the job |
+| `GET` | `/jobs/{id}/diagnostics` | Failure, restart, checkpoint summary |
+| `GET` | `/jobs/{id}/history?points=N` | Metric samples for sparklines |
+| `GET` | `/jobs/history?points=N` | Samples for all jobs |
+
+## Controller
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/livez` | no | Process liveness |
+| `GET` | `/readyz` | no | Dependency readiness (can be 503) |
+| `GET` | `/healthz` | no | Alias for older clients |
+| `GET` | `/metrics` | no | Controller Prometheus metrics |
+| `GET` | `/cluster`, `/targets`, `/config` | yes | Capacity, scrape targets, UI config |
+| `POST` | `/auth` | | Check a token, returns `open` / `readonly` / `readwrite` |
+
+## Compatibility
+
+- Existing routes and fields stay valid. New fields may be added; ignore unknown ones.
+- Mutations need a `readwrite` token, are audit-logged without bodies or tokens,
+  and are rate-limited per client.
+- Breaking changes ship as versioned routes or with a migration note.

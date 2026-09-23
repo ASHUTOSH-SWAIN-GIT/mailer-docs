@@ -1,0 +1,59 @@
+---
+title: Configuration
+description: Every environment variable Weibo reads, grouped by component.
+icon: SlidersHorizontal
+---
+
+## CLI (client)
+
+| Variable | Purpose |
+| --- | --- |
+| `WEIBO_CONTROLLER` | Controller base URL, e.g. `http://localhost:9000` |
+| `WEIBO_TOKEN` | Bearer token sent with every request |
+| `WEIBO_REGISTRY` | Registry prefix for `weibo deploy` |
+
+## Controller (`weibo dashboard`)
+
+| Variable | Purpose |
+| --- | --- |
+| `WEIBO_AUTH_TOKEN` | Shared bearer token |
+| `WEIBO_AUTH_TOKEN_SHA256` | Comma-separated token hashes, optional `readonly:` / `readwrite:` |
+| `WEIBO_ALLOW_OPEN_PUBLIC` | Allow a public bind with no auth |
+| `WEIBO_GRAFANA_URL` | Grafana base URL for deep links |
+| `WEIBO_LOG_LEVEL` | `debug`, `info`, `warn`, `error` |
+| `WEIBO_LOG_FORMAT` | `text` or `json` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP/HTTP traces endpoint |
+| `OTEL_SERVICE_NAME` | Trace service name (default `weibo-controller`) |
+
+## Runner (`weibo-runner` image)
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `WORKFLOW` | required | Path to the mounted workflow |
+| `DATA_DIR` | `/data` | State and checkpoint base dir |
+| `SAVEPOINT_DIR` | `/savepoints` | Local savepoint dir |
+| `SAVEPOINT_S3_BUCKET` | unset | Store savepoints in S3-compatible storage |
+| `RESTORE_SAVEPOINT` | unset | Savepoint label to restore on start |
+| `PORT` | `8080` | Agent control port (`/state`, `/metrics`, ...) |
+| `LOG_LEVEL` / `LOG_FORMAT` | `info` / `json` | Logging |
+
+The controller sets `WEIBO_JOB_ID` and `WEIBO_RUN_KIND` on every job.
+
+## Secrets in workflows
+
+`${VAR}` placeholders resolve from the process environment at compile time and
+never appear in descriptions, metadata, or the dashboard. See
+[Secrets](/docs/workflows/secrets).
+
+## SDK job manifest
+
+```yaml
+kind: sdk
+name: orders
+image: orders-sdk:1.0
+env:
+  LOG_LEVEL: info
+resources:
+  cpu: "500m"
+  memory: "512Mi"
+```

@@ -1,0 +1,139 @@
+---
+title: Deployment
+description: Self-host the control plane on a VM or Kubernetes, and run jobs against it.
+icon: Rocket
+---
+
+Weibo itself is an embedded library — a pipeline built with the SDK ships
+inside your own binary and needs no separate deployment. The **control
+plane** (`weibo dashboard`) is optional: run it when you want a REST API,
+a web UI, and `weibo deploy`/`jobs`/`logs`/`cancel` to manage jobs as
+containers instead of running pipelines as one-off processes.
+
+```
+developer ──(REST + bearer token)──▶ controller (weibo dashboard) ──▶ Docker ──▶ job containers
+   weibo deploy / jobs / logs           API + UI on :9000                 one per job
+```
+
+One controller process persists job state to SQLite and drives one
+container per job. Jobs are either a **YAML workflow** (runs the generic
+`weibo-runner` image) or an **SDK job** (a prebuilt Go pipeline image).
+
+## Quickstart: single VM with Docker
+
+```sh
+# 1. Install Docker
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker "$USER"
+
+# 2. Build and push the runner image (from the repo root)
+docker build -f Dockerfile.runner -t <registry>/weibo-runner:1.0 .
+docker push <registry>/weibo-runner:1.0
+
+# 3. Start the controller
+export WEIBO_AUTH_TOKEN="$(openssl rand -hex 32)"
+weibo dashboard \
+  -addr 127.0.0.1:9000 \
+  -image <registry>/weibo-runner:1.0 \
+  -db /var/lib/weibo/control.db \
+  -no-open
+```
+
+From a developer machine, tunnel to the loopback-bound controller and deploy:
+
+```sh
+ssh -N -L 9000:127.0.0.1:9000 user@vm
+export WEIBO_CONTROLLER=http://localhost:9000
+export WEIBO_TOKEN="<the shared token>"
+
+weibo deploy -file examples/workflows/wordcount.yaml   # YAML workflow, nothing to build
+weibo deploy -registry <registry> -file weibo.yaml     # SDK job: build → push → submit
+weibo jobs
+weibo logs <job-id>
+```
+
+## CLI reference
+
+| Command | Purpose |
+| --- | --- |
+| `weibo dashboard` | Start the controller + UI. |
+| `weibo deploy` | Build, push, and submit a job manifest. |
+| `weibo jobs` / `weibo status <id>` | List jobs / inspect one. |
+| `weibo logs <id> [-tail N]` | Print a job's container logs. |
+| `weibo cancel <id>` | Gracefully stop a job. |
+| `weibo restart <id> [-savepoint L]` | Resume a job, optionally from a savepoint. |
+| `weibo savepoint <id> -label L` | Stop a job with a named savepoint. |
+
+## Docker vs Kubernetes
+
+| | Docker (default) | Kubernetes |
+| --- | --- | --- |
+| Best for | a single VM | an existing cluster |
+| Unit of work | one container per job | one `batch/v1` Job per job |
+| State | per-job named volume | per-job PVC |
+| Select with | `-backend docker` | `-backend kubernetes` |
+
+```sh
+weibo dashboard -backend kubernetes \
+  -namespace weibo \
+  -image <registry>/weibo-runner:1.0 \
+  -pvc-size 2Gi \
+  -storage-class gp3 \
+  -image-pull-secrets regcred
+```
+
+For an in-cluster controller, start from `control/kubernetes-controller.yaml`
+in the repo — it ships the Deployment/Service, RBAC, SQLite PVC, probes, and
+a PodDisruptionBudget. Keep `replicas: 1`: the controller uses SQLite on a
+single PVC, so multiple replicas aren't safe without leader election.
+
+## docker-compose (production-like local stack)
+
+`deploy/compose/` in the repo has a Caddy-fronted compose stack (TLS
+termination, controller, runner) for trying a production topology locally —
+see `deploy/compose/README.md`.
+
+## Security checklist
+
+- **Terminate TLS in front of the controller** (Caddy/nginx/LB) — the API and
+  UI are plain HTTP and the bearer token is a shared secret.
+- **Bind to a private interface** (`-addr 127.0.0.1:9000`) and reach it via
+  SSH tunnel or the TLS proxy.
+- **Set a strong token and rotate it**: `openssl rand -hex 32`. Prefer
+  `WEIBO_AUTH_TOKEN_SHA256` so only hashes are stored.
+- **Cap job resources** (`resources.cpu` / `resources.memory` in SDK
+  manifests) so one job can't starve the host.
+- **Persist the SQLite DB** on durable storage (`-db /var/lib/weibo/control.db`).
+
+Running `weibo dashboard` without a token is allowed only for loopback/private
+use — the controller refuses a wildcard bind (`:9000`, `0.0.0.0:9000`) unless
+you pass `-allow-open-public`.
+
+## systemd unit
+
+```ini
+# /etc/systemd/system/weibo.service
+[Unit]
+Description=Weibo control plane
+After=docker.service
+Requires=docker.service
+
+[Service]
+User=weibo
+EnvironmentFile=/etc/weibo/weibo.env
+ExecStart=/usr/local/bin/weibo dashboard \
+  -addr 127.0.0.1:9000 \
+  -image <registry>/weibo-runner:1.0 \
+  -db /var/lib/weibo/control.db \
+  -no-open
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+```
+
+The full guide — registry authentication (ECR, private registries), pull
+policy, and the Kubernetes NetworkPolicy template — lives in
+[`docs/self-hosting.md`](https://github.com/ASHUTOSH-SWAIN-GIT/weibo/blob/main/docs/self-hosting.md)
+in the repo.

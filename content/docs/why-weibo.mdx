@@ -1,0 +1,64 @@
+---
+title: Why Weibo
+description: Design decisions, trade-offs, and how Weibo compares to Flink and Kafka Streams.
+icon: Lightbulb
+---
+
+## The short version
+
+Go has no idiomatic, embeddable stream processor with real state and
+exactly-once. Weibo is that: a library, not a cluster.
+
+## Design decisions
+
+**Single process, not distributed.** Weibo runs as goroutines inside your
+binary. Scale out by running more instances in the same Kafka consumer group;
+Kafka handles partition assignment.
+
+**Barrier checkpointing.** Barriers flow in-band with data. Stateful operators
+snapshot as the barrier passes; parallel stages re-align barriers at the exit
+so every snapshot is a consistent cut.
+
+**Pure Go.** Kafka via `segmentio/kafka-go` and `franz-go`, Postgres via `pgx`,
+state via Pebble. No CGO, no JVM.
+
+**Bounded edges.** Stages are connected by bounded queues. A slow sink blocks
+upstream instead of growing memory, and the block time is a metric.
+
+## When to use it
+
+- Stateful Kafka pipelines in a Go codebase
+- You want exactly-once Kafka → Kafka without operating Flink
+- Per-key aggregates, event-time windows, dedup, enrichment
+
+## When not to
+
+- You need SQL, CEP, or multi-stream joins today
+- A single job's throughput exceeds what one process can do and the input can't be partitioned
+
+## Weibo vs Flink
+
+| | Apache Flink | Weibo |
+| --- | --- | --- |
+| Language | Java / Scala | Go |
+| Deployment | JobManager + TaskManagers | Embedded, single process |
+| API | DataStream, Table, SQL | DataStream (fluent) + YAML |
+| State | RocksDB, memory | Pebble, memory |
+| Checkpoints | Aligned + unaligned barriers | Aligned barriers |
+| Windows | Tumbling, sliding, session, global | Tumbling, sliding, session |
+| Exactly-once | Transactional sinks | Kafka → Kafka via `TxnKafkaSink` |
+| Backpressure | Credit-based network flow | Bounded edges |
+| SQL / CEP | Yes | No |
+
+## Weibo vs Kafka Streams
+
+Similar model (embedded library, Kafka-native, local state, exactly-once), but
+Kafka Streams is JVM-only. Weibo also writes to Postgres, HTTP, S3, and files.
+
+## Status
+
+Implemented: core operators, keyed state, windows and watermarks, Kafka and
+Postgres connectors, checkpointing, keyed parallelism, backpressure,
+Prometheus metrics, exactly-once Kafka, Pebble state, control plane.
+
+Next: multi-stream joins, typed `Stream[T]` API. See [Roadmap](/docs/reference/roadmap).
