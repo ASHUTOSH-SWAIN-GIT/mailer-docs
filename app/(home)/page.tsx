@@ -1,136 +1,143 @@
 import Link from 'next/link';
-import {
-  ArrowUpRight,
-  Clock,
-  Cube,
-  Database,
-  Gauge,
-  ShieldCheck,
-  SquaresFour,
-} from '@phosphor-icons/react/dist/ssr';
-import { CopyCommand } from '@/components/home/copy-command';
-import './home.css';
+import { ChevronRight } from 'lucide-react';
+import { CopyCommand } from '@/components/landing/copy-command';
+import { PipelineShowcase } from '@/components/landing/pipeline-showcase';
 
-const features = [
-  { Icon: Cube, title: 'Embedded', body: 'A Go library, not a cluster. Import it and run it inside your service.' },
-  { Icon: Database, title: 'Keyed state', body: 'Per-key state in memory, or on disk with Pebble for millions of keys.' },
-  { Icon: Clock, title: 'Event time', body: 'Tumbling, sliding, and session windows driven by watermarks.' },
-  { Icon: ShieldCheck, title: 'Exactly-once', body: 'Offsets, state, and Kafka output commit as one checkpoint.' },
-  { Icon: Gauge, title: 'Backpressure', body: 'Bounded edges. A slow sink slows the source, not your memory.' },
-  { Icon: SquaresFour, title: 'Control plane', body: 'Optional dashboard, CLI, and REST API to run jobs as containers.' },
-];
+const REPO = 'https://github.com/ASHUTOSH-SWAIN-GIT/weibo';
 
-const entryPoints = [
-  ['Go SDK', 'Build a pipeline in code', '/docs/sdk/overview'],
-  ['Workflows', 'Declare a pipeline in YAML', '/docs/workflows/format'],
-  ['Internals', 'How checkpointing works', '/docs/internals/checkpointing'],
-  ['Deployment', 'Self-host the control plane', '/docs/operations/deployment'],
+// Figures from docs/benchmarks.md in the engine repository (run 3: 10,000
+// events/s on one 2 vCPU machine, job killed with SIGKILL mid-run).
+const proof = [
+  { value: '4,414,010', label: 'orders processed' },
+  { value: '7,000 of 7,000', label: 'window totals exact' },
+  { value: '6.4 s', label: 'from kill to running again' },
 ] as const;
 
-const code = `env := weibo.NewEnv().
-    WithCheckpointing(30*time.Second, storage).
-    WithStateBackend(state.Pebble("./state"))
+const features = [
+  {
+    title: 'Keyed state on disk',
+    body: 'Per-key state lives in Pebble, so it is bounded by disk instead of memory.',
+    handle: 'WithStateBackend(state.Pebble(dir))',
+  },
+  {
+    title: 'Event-time windows',
+    body: 'Tumbling, sliding and session windows, with watermarks and allowed lateness.',
+    handle: 'Window(window.NewTumbling(d))',
+  },
+  {
+    title: 'Checkpoints and recovery',
+    body: 'Barrier-based snapshots restore operator state and source offsets after a crash.',
+    handle: 'WithCheckpointing(interval, storage)',
+  },
+  {
+    title: 'Exactly-once Kafka',
+    body: 'Kafka to Kafka delivery through a transactional sink that commits with each checkpoint.',
+    handle: 'sink.NewTxnKafkaSink(...)',
+  },
+  {
+    title: 'Backpressure',
+    body: 'Bounded edges between stages slow a fast source down instead of dropping records.',
+    handle: 'WithBufferSize(n)',
+  },
+  {
+    title: 'YAML and a dashboard',
+    body: 'Describe common pipelines in YAML and watch every job in the built-in web dashboard.',
+    handle: 'weibo dashboard',
+  },
+] as const;
 
-env.FromSource(orders).
-    KeyBy(byCustomer).WithPartitions(4).
-    Reduce(sumAmounts).
-    ToSink(kafka.NewTransactionalSink(output))
-
-env.Execute(ctx)`;
+const entryPoints = [
+  { title: 'Go SDK', body: 'Build pipelines from sources, operators, state and sinks.', href: '/docs/sdk/overview' },
+  { title: 'Declarative workflows', body: 'Describe common pipelines in YAML and run them with the workflow CLI.', href: '/docs/workflows/overview' },
+  { title: 'Internals', body: 'How stages, keyed workers, Pebble state and checkpoints work.', href: '/docs/internals/architecture' },
+  { title: 'Operations', body: 'Run with Kafka and Postgres, read the metrics, know the delivery guarantees.', href: '/docs/operations/runtime' },
+] as const;
 
 export default function HomePage() {
   return (
-    <main className="vx">
-      <nav className="vx-nav">
-        <div className="vx-nav-inner">
-          <Link href="/" className="vx-brand">
-            <img src="/weibo-mark.png" alt="" />
-            Weibo
-          </Link>
-          <div className="vx-nav-links">
-            <Link href="/docs">Docs</Link>
-            <Link href="/docs/examples">Examples</Link>
-            <Link href="https://github.com/ASHUTOSH-SWAIN-GIT/weibo">GitHub</Link>
-          </div>
-          <Link href="/docs/installation" className="vx-btn vx-btn-light vx-btn-sm">
-            Get started
-          </Link>
-        </div>
-      </nav>
-
-      <section className="vx-hero">
-        <p className="vx-eyebrow">Open source · Go</p>
-        <h1>Stream processing that lives in your code.</h1>
-        <p className="vx-lede">
-          Weibo is an embeddable stream processing engine for Go — keyed
-          state, event-time windows, and exactly-once Kafka delivery, with no
-          cluster to operate.
+    <div className="lp">
+      <section className="lp-hero">
+        <Link href={`${REPO}/releases/tag/v1.0.3`} className="lp-pill">
+          Weibo v1.0.3 is out
+          <ChevronRight size={14} aria-hidden="true" />
+        </Link>
+        <h1>Stream processing that runs inside your Go service</h1>
+        <p>
+          Weibo is an embeddable engine for stateful pipelines, event-time windows and
+          exactly-once Kafka delivery. It runs in your process. No cluster, no JVM.
         </p>
-        <div className="vx-actions">
-          <Link href="/docs/getting-started" className="vx-btn vx-btn-light">
+        <div className="lp-actions">
+          <Link href="/docs/getting-started" className="lp-btn lp-btn-solid">
             Get started
           </Link>
-          <Link href="/docs" className="vx-btn vx-btn-ghost">
-            Read the docs
-          </Link>
-        </div>
-        <CopyCommand command="go get github.com/ASHUTOSH-SWAIN-GIT/weibo" />
-      </section>
-
-      <section className="vx-section">
-        <div className="vx-code">
-          <div className="vx-code-bar">pipeline.go</div>
-          <pre>
-            <code>{code}</code>
-          </pre>
+          <CopyCommand command="go get github.com/ASHUTOSH-SWAIN-GIT/weibo" />
         </div>
       </section>
 
-      <section className="vx-section">
-        <div className="vx-grid">
-          {features.map(({ Icon, title, body }) => (
-            <article key={title}>
-              <Icon size={20} weight="light" />
-              <h3>{title}</h3>
-              <p>{body}</p>
+      <section className="lp-wrap lp-showcase" aria-label="A pipeline and its code">
+        <PipelineShowcase />
+      </section>
+
+      <section className="lp-wrap lp-proof">
+        <div className="lp-proof-copy">
+          <h2>We killed it mid-run and checked every answer</h2>
+          <p>
+            A Kafka to keyed window to S3 pipeline ran at 10,000 events per second on one
+            two-core machine. We stopped the job with SIGKILL, then compared each window
+            total with the value computed independently from the input.
+          </p>
+        </div>
+        <dl className="lp-stats">
+          {proof.map((p) => (
+            <div key={p.label}>
+              <dt>{p.label}</dt>
+              <dd>{p.value}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="lp-note">
+          One machine, one Kafka broker, one kill per run. The{' '}
+          <Link href={`${REPO}/blob/main/docs/benchmarks.md`}>benchmarks page</Link>{' '}
+          lists what was not measured.
+        </p>
+      </section>
+
+      <section className="lp-wrap lp-features">
+        <h2>Everything a stateful pipeline needs, in one process</h2>
+        <div className="lp-grid">
+          {features.map((f) => (
+            <article key={f.title}>
+              <h3>{f.title}</h3>
+              <p>{f.body}</p>
+              <code>{f.handle}</code>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="vx-section vx-entry">
-        <div className="vx-entry-head">
-          <h2>Start building</h2>
-          <Link href="/docs">
-            Browse all docs <ArrowUpRight size={15} weight="bold" />
-          </Link>
-        </div>
-        <div className="vx-entry-list">
-          {entryPoints.map(([title, desc, href]) => (
-            <Link href={href} key={title} className="vx-entry-item">
-              <div>
-                <strong>{title}</strong>
-                <span>{desc}</span>
-              </div>
-              <ArrowUpRight size={16} weight="regular" />
-            </Link>
+      <section className="lp-wrap lp-docs">
+        <h2>Start where it fits</h2>
+        <ul>
+          {entryPoints.map((e) => (
+            <li key={e.title}>
+              <Link href={e.href}>
+                <strong>{e.title}</strong>
+                <span>{e.body}</span>
+                <ChevronRight size={18} aria-hidden="true" />
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
 
-      <footer className="vx-footer">
-        <div className="vx-brand">
-          <img src="/weibo-mark.png" alt="" />
-          Weibo
-        </div>
-        <div className="vx-footer-links">
-          <Link href="/docs">Docs</Link>
-          <Link href="/docs/installation">Install</Link>
-          <Link href="/docs/troubleshooting">FAQ</Link>
-          <Link href="https://github.com/ASHUTOSH-SWAIN-GIT/weibo">GitHub</Link>
-        </div>
-        <span>MIT License</span>
+      <footer className="lp-wrap lp-footer">
+        <span>Weibo is open source under the MIT license.</span>
+        <nav aria-label="Footer">
+          <Link href="/docs">Documentation</Link>
+          <Link href={REPO}>GitHub</Link>
+          <Link href={`${REPO}/releases`}>Releases</Link>
+        </nav>
       </footer>
-    </main>
+    </div>
   );
 }
